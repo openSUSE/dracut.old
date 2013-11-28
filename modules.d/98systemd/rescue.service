@@ -16,7 +16,7 @@ Environment=HOME=/
 Environment=DRACUT_SYSTEMD=1
 Environment=NEWROOT=/sysroot
 WorkingDirectory=/
-ExecStartPre=-/bin/plymouth quit
+ExecStartPre=-/usr/bin/plymouth quit
 ExecStart=-/bin/sh -i -l
 ExecStopPost=-/bin/rm -f -- /.console_lock
 ExecStopPost=-/usr/bin/systemctl --fail --no-block default
