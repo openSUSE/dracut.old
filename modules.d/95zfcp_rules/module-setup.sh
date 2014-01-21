@@ -21,5 +21,6 @@ install() {
     inst_hook cmdline 30 "$moddir/parse-zfcp.sh"
     if [[ $hostonly ]] ; then
         inst_rules_wildcard 51-zfcp-*.rules
+        inst_rules_wildcard 41-s390x-zfcp-*.rules
     fi
 }
