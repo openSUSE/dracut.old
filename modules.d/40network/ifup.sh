@@ -87,6 +87,70 @@ else
         [ -e /tmp/net.$(cat /sys/class/net/$netif/address).did-setup ] && exit 0
 fi
 
+dhcp_apply() {
+    if [ -f /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} ]; then
+        . /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
+    else
+        warn "DHCP failed";
+        return 1
+    fi
+
+    if [ -z "${IPADDR}" ] || [ -z "${INTERFACE}" ]; then
+           warn "Missing crucial DHCP variables"
+           return 1
+    fi
+
+    # Assign IP address
+    ip $1 addr add "$IPADDR" ${BROADCAST:+broadcast $BROADCAST} dev "$INTERFACE"
+
+    # Assign network route the interface is attached to
+    if [ -n "${NETWORK}" ]; then
+        ip $1 route add "$NETWORK"/"$PREFIXLEN" dev "$INTERFACE"
+    fi
+
+    # Assign provided routes
+    local r route=()
+    if [ -n "${ROUTES}" ]; then
+        for r in ${ROUTES}; do
+            route=(${r//,/ })
+            ip $1 route add "$route[0]"/"$route[1]" via "$route[2]" dev "$INTERFACE"
+        done
+    fi
+
+    # Assign provided routers
+    local g
+    if [ -n "${GATEWAYS}" ]; then
+        for g in ${GATEWAYS}; do
+            ip $1 route add default via "$g" dev "$INTERFACE" && break
+        done
+    fi
+
+    # Setup hostname
+    [ -n "${HOSTNAME}" ] && hostname "$HOSTNAME"
+
+    # If nameserver= has not been specified, use what dhcp provides
+    if [ ! -s /tmp/net.$netif.resolv.conf ]; then
+        if [ -n "${DNSDOMAIN}" ]; then
+            echo domain "${DNSDOMAIN}"
+        fi >> /tmp/net.$netif.resolv.conf
+
+        if [ -n "${DNSSEARCH}" ]; then
+            echo search "${DNSSEARCH}"
+        fi >> /tmp/net.$netif.resolv.conf
+
+        if  [ -n "${DNSSERVERS}" ] ; then
+            for s in ${DNSSERVERS}; do
+                echo nameserver "$s"
+            done
+        fi >> /tmp/net.$netif.resolv.conf
+    fi
+    [ -e /tmp/net.$netif.resolv.conf ] && \
+        cp -f /tmp/net.$netif.resolv.conf /etc/resolv.conf
+
+    info "DHCP is finished successfully"
+    return 0
+}
+
 # Run dhclient
 do_dhcp() {
     # dhclient-script will mark the netif up and generate the online
@@ -98,28 +162,35 @@ do_dhcp() {
     local _DHCPRETRY=$(getargs rd.net.dhcp.retry=)
     _DHCPRETRY=${_DHCPRETRY:-1}
 
-    [ -e /tmp/dhclient.$netif.pid ] && return 0
+    [ -f /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} ] && return 0
 
-    if ! iface_has_link $netif; then
-        warn "No carrier detected on interface $netif"
-        return 1
+    info "Preparation for DHCP transaction"
+
+    local dhclient=''
+    if [ "$1" = "-4" ] ; then
+        dhclient="wickedd-dhcp4"
+    elif [ "$1" = "-6" ] ; then
+        dhclient="wickedd-dhcp6"
     fi
 
-    while [ $_COUNT -lt $_DHCPRETRY ]; do
-        info "Starting dhcp for interface $netif"
-        dhclient "$@" \
-                 ${_timeout:+-timeout $_timeout} \
-                 -q \
-                 -cf /etc/dhclient.conf \
-                 -pf /tmp/dhclient.$netif.pid \
-                 -lf /tmp/dhclient.$netif.lease \
-                 $netif \
-            && return 0
-        _COUNT=$(($_COUNT+1))
-        [ $_COUNT -lt $_DHCPRETRY ] && sleep 1
-    done
-    warn "dhcp for interface $netif failed"
-    return 1
+    # Address changed
+    ip $1 addr flush dev "$netif"
+
+    if ! iface_has_link $netif; then
+        warn "No carrier detected"
+        warn "Trying to set $netif up..."
+        ip $1 link set dev "$netif" up
+        if ! iface_has_link $netif; then
+            warn "Failed..."
+            return 1
+        fi
+    fi
+
+    $dhclient --test $netif > /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
+    dhcp_apply $1 || return $?
+
+    echo $netif > /tmp/setup_net_${netif}.ok
+    return 0
 }
 
 load_ipv6() {
@@ -261,8 +332,6 @@ if [ -e /tmp/team.info ]; then
         ip link set $teammaster up
     fi
 fi
-
-# XXX need error handling like dhclient-script
 
 if [ -e /tmp/bridge.info ]; then
     . /tmp/bridge.info
