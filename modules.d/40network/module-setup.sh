@@ -2,11 +2,14 @@
 # -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # ex: ts=8 sw=4 sts=4 et filetype=sh
 
+WICKEDD_DHCP_PATH="/usr/lib/wicked/bin"
+WICKED_EXT_PATH="/etc/wicked/extensions"
+
 # called by dracut
 check() {
     local _program
 
-    require_binaries ip arping dhclient || return 1
+    require_binaries ip arping $WICKEDD_DHCP_PATH/wickedd-dhcp4 $WICKEDD_DHCP_PATH/wickedd-dhcp6 || return 1
 
     return 255
 }
@@ -72,16 +75,18 @@ installkernel() {
 # called by dracut
 install() {
     local _arch _i _dir
-    inst_multiple ip arping dhclient sed
+    inst_multiple ip arping hostname sed
     inst_multiple -o ping ping6
     inst_multiple -o brctl
     inst_multiple -o teamd teamdctl teamnl
     inst_simple /etc/libnl/classid
+    inst_simple "$WICKEDD_DHCP_PATH/wickedd-dhcp4" "/usr/sbin/wickedd-dhcp4"
+    inst_simple "$WICKEDD_DHCP_PATH/wickedd-dhcp6" "/usr/sbin/wickedd-dhcp6"
+    inst_libdir_file "libwicked*.so.*"
+    inst_libdir_file "libdbus-1.so.*"
     inst_script "$moddir/ifup.sh" "/sbin/ifup"
     inst_script "$moddir/netroot.sh" "/sbin/netroot"
-    inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
     inst_simple "$moddir/net-lib.sh" "/lib/net-lib.sh"
-    inst_simple "$moddir/dhclient.conf" "/etc/dhclient.conf"
     inst_hook pre-udev 50 "$moddir/ifname-genrules.sh"
     inst_hook pre-udev 60 "$moddir/net-genrules.sh"
     inst_hook cmdline 91 "$moddir/dhcp-root.sh"
@@ -92,7 +97,6 @@ install() {
     inst_hook cmdline 97 "$moddir/parse-bridge.sh"
     inst_hook cmdline 98 "$moddir/parse-ip-opts.sh"
     inst_hook cmdline 99 "$moddir/parse-ifname.sh"
-    inst_hook cleanup 10 "$moddir/kill-dhclient.sh"
 
     _arch=$(uname -m)
 
