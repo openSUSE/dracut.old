@@ -291,7 +291,9 @@ while (($# > 0)); do
 done
 
 [[ $targets && $kernels ]] || default_kernel_images
-[[ $targets && $kernels ]] || (error "No kernel found in $boot_dir" && usage)
+if [[ ! $targets || ! $kernels ]];then
+    error "No kernel found in $boot_dir"
+fi
 
 # We can have several targets/kernels, transform the list to an array
 targets=( $targets )
