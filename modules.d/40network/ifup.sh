@@ -186,6 +186,7 @@ do_dhcp() {
     $dhclient --test $netif > /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
     dhcp_apply $1 || return $?
 
+    echo $netif > /tmp/net.${netif}.did-setup
     echo $netif > /tmp/setup_net_${netif}.ok
     return 0
 }
