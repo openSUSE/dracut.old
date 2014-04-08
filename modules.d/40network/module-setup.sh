@@ -15,6 +15,13 @@ check() {
 # called by dracut
 depends() {
     echo "kernel-network-modules"
+    local link=$(readlink $moddir/write-ifcfg.sh)
+    [[ "$link" = "write-ifcfg-suse.sh" ]] && \
+    [[ -d /etc/sysconfig/network ]] && \
+        echo "ifcfg"
+    [[ "$link" = "write-ifcfg-redhat.sh" ]] && \
+    [[ -d /etc/sysconfig/network-scripts ]] && \
+        echo "ifcfg"
     return 0
 }
 
