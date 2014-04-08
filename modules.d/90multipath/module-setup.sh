@@ -91,8 +91,7 @@ install() {
     inst_libdir_file "libmultipath*" "multipath/*"
 
     if dracut_module_included "systemd"; then
-        inst_multiple \
-            $systemdsystemunitdir/multipathd.service
+        inst_simple "${moddir}/multipathd.service" "${systemdsystemunitdir}/multipathd.service"
         mkdir -p "${initdir}${systemdsystemconfdir}/sysinit.target.wants"
         ln -rfs "${initdir}${systemdsystemunitdir}/multipathd.service" "${initdir}${systemdsystemconfdir}/sysinit.target.wants/multipathd.service"
     else
