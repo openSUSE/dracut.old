@@ -4,7 +4,13 @@
 
 # called by dracut
 check() {
-    [[ -d /etc/sysconfig/network-scripts ]] && return 0
+    local link=$(readlink $moddir/write-ifcfg.sh)
+    [[ "$link" = "write-ifcfg-suse.sh" ]] && \
+    [[ -d /etc/sysconfig/network ]] && \
+        return 0
+    [[ "$link" = "write-ifcfg-redhat.sh" ]] && \
+    [[ -d /etc/sysconfig/network-scripts ]] && \
+        return 0
     return 255
 }
 
