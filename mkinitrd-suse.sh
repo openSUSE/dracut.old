@@ -70,10 +70,7 @@ usage () {
     $cmd "	-j device		Journal device"
     $cmd "	-D interface		Run dhcp on the specified interface."
     $cmd "	-I interface		Configure the specified interface statically."
-    $cmd "	-a acpi_dsdt		Attach compiled ACPI DSDT (Differentiated"
-    $cmd "				System Description Table) to initrd. This"
-    $cmd "				replaces the DSDT of the BIOS. Defaults to"
-    $cmd "				the ACPI_DSDT variable in /etc/sysconfig/kernel."
+    $cmd "	-a acpi_dsdt		Obsolete, do not use."
     $cmd "	-s size			Add splash animation and bootscreen to initrd."
 
     [[ $1 = '-n' ]] && exit 0
@@ -310,11 +307,10 @@ if [ -f /etc/sysconfig/kernel ] ; then
     . /etc/sysconfig/kernel
 fi
 [[ $module_list ]] || module_list="${INITRD_MODULES}"
-basicmodules="$basicmodules ${module_list}"
 [[ $domu_module_list ]] || domu_module_list="${DOMU_INITRD_MODULES}"
-[[ $acpi_dsdt ]] || acpi_dsdt="${ACPI_DSDT}"
+shopt -s extglob
 
-echo "Creating: target|kernel|dracut args|basicmodules "
+echo "Creating: target|kernel|dracut args "
 for ((i=0 ; $i<${#targets[@]} ; i++)); do
 
     if [[ $img_vers ]];then
@@ -324,28 +320,33 @@ for ((i=0 ; $i<${#targets[@]} ; i++)); do
     fi
     kernel="${kernels[$i]}"
 
+    if is_xen_kernel $kernel $rootfs ; then
+	modules_all="${module_list} ${domu_module_list}"
+    else
+        modules_all="${module_list}"
+    fi
+
+    # Remove leading and trailing spaces needs (set above): shopt -s extglob
+    modules_all=${modules_all%%+([[:space:]])}
+    modules_all=${modules_all##+([[:space:]])}
+
     # Duplicate code: No way found how to redirect output based on $quiet
     if [[ $quiet == 1 ]];then
-	echo "$target|$kernel|$dracut_args|$basicmodules"
-	if is_xen_kernel $kernel $rootfs ; then
-	    basicmodules="$basicmodules ${domu_module_list}"
-	fi
-	if [[ $basicmodules ]]; then
-            $dracut_cmd $dracut_args --add-drivers "$basicmodules" "$target" \
-		"$kernel" &>/dev/null
-	else
+	echo "$target|$kernel|$dracut_args_all"
+        # Duplicate code: --add-drivers must not be called with empty string
+        # -> dracut bug workarounded ugly, because of complex whitespace
+        # expansion magics
+        if [ -n "${modules_all}" ];then
+            $dracut_cmd $dracut_args --add-drivers "${modules_all}" "$target" "$kernel" &>/dev/null
+        else
             $dracut_cmd $dracut_args "$target" "$kernel" &>/dev/null
-	fi
+        fi
     else
-	if is_xen_kernel $kernel $rootfs ; then
-	    basicmodules="$basicmodules ${domu_module_list}"
-	fi
-	if [[ $basicmodules ]]; then
-            $dracut_cmd $dracut_args --add-drivers "$basicmodules" "$target" \
-		"$kernel"
-	else
+        if [ -n "${modules_all}" ];then
+            $dracut_cmd $dracut_args --add-drivers "${modules_all}" "$target" "$kernel"
+        else
             $dracut_cmd $dracut_args "$target" "$kernel"
-	fi
+        fi
     fi
 done
 
