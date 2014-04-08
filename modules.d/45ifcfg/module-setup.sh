@@ -2,7 +2,6 @@
 
 # called by dracut
 check() {
-    [[ -d /etc/sysconfig/network-scripts ]] && return 0
     return 255
 }
 
