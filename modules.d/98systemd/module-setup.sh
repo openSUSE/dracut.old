@@ -20,7 +20,7 @@ depends() {
 }
 
 installkernel() {
-    instmods autofs4 ipv6
+    hostonly='' instmods autofs4 ipv6
 }
 
 # called by dracut
