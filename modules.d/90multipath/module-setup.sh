@@ -101,7 +101,7 @@ install() {
 
     inst_hook cleanup   80 "$moddir/multipathd-needshutdown.sh"
 
-    inst_rules 40-multipath.rules 62-multipath.rules 65-multipath.rules \
+    inst_rules 56-multipath.rules \
         66-kpartx.rules 67-kpartx-compat.rules
 }
 
