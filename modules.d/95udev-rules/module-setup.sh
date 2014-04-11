@@ -27,7 +27,8 @@ install() {
         exit 1
     fi
 
-    inst_rules 50-udev-default.rules 59-scsi-sg3_utils.rules \
+    inst_rules 50-udev-default.rules \
+        55-scsi-sg3_id.rules 58-scsi-sg3_symlink.rules \
         60-persistent-storage.rules \
         61-persistent-storage-edd.rules 80-drivers.rules 95-udev-late.rules \
         60-pcmcia.rules \
