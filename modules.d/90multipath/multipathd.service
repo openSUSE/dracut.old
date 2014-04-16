@@ -5,9 +5,9 @@ DefaultDependencies=no
 Conflicts=shutdown.target
 
 [Service]
-Type=forking
+Type=simple
 ExecStartPre=/sbin/modprobe dm-multipath
-ExecStart=/sbin/multipathd
+ExecStart=/sbin/multipathd -s -d
 ExecReload=/sbin/multipathd reconfigure
 ExecStop=/sbin/multipathd shutdown
 
