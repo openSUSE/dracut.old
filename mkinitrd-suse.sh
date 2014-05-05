@@ -297,7 +297,11 @@ targets=( $targets )
 [[ $kernels ]] && kernels=( $kernels )
 
 [[ $logfile ]]        && dracut_args="${dracut_args} --logfile $logfile"
-[[ $host_only == 1 ]] && dracut_args="${dracut_args} --hostonly"
+if [[ $host_only == 1 ]];then
+    dracut_args="${dracut_args} --hostonly --hostonly-cmdline"
+else
+    dracut_args="${dracut_args} --no-hostonly --no-hostonly-cmdline"
+fi
 [[ $force == 1 ]]     && dracut_args="${dracut_args} --force"
 [[ $dracut_cmdline ]] && dracut_args="${dracut_args} --kernel-cmdline ${dracut_cmdline}"
 [ -z "$(type -p update-bootloader)" ] && skip_update_bootloader=1
