@@ -39,6 +39,22 @@ depends() {
 installkernel() {
     local _arch=$(uname -m)
 
+    install_ibft() {
+        # When iBFT / iscsi_boot is detected:
+        # - mark network as mandatory
+        # - specify firmware booting cmdline parameter
+
+        for d in /sys/firmware/* ; do
+            if [ -d ${d}/initiator ] ; then
+                echo "rd.neednet=1" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
+                echo "rd.iscsi.firmware=1" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
+            fi
+        done
+    }
+
+    # Detect iBFT and perform mandatory steps
+    install_ibft
+
     instmods bnx2i qla4xxx cxgb3i cxgb4i be2iscsi
     hostonly="" instmods iscsi_tcp iscsi_ibft crc32c iscsi_boot_sysfs
     iscsi_module_filter() {
