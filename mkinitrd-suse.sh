@@ -23,7 +23,6 @@
 boot_dir="/boot"
 quiet=0
 host_only=1
-force=0
 logfile=/var/log/YaST2/mkinitrd.log
 dracut_cmd=dracut
 
@@ -203,8 +202,6 @@ default_kernel_images() {
     for initrd_image in $initrd_images;do
 	targets="$targets $initrd_image"
     done
-    host_only=1
-    force=1
 }
 
 while (($# > 0)); do
@@ -217,8 +214,6 @@ while (($# > 0)); do
 	    for kernel_image in $kernel_images;do
 		kernels="$kernels ${kernel_image#*-}"
 	    done
-	    host_only=1
-	    force=1
 	    ;;
 	-i) read_arg initrd_images "$@" || shift $?
 	    for initrd_image in $initrd_images;do
@@ -274,7 +269,6 @@ while (($# > 0)); do
         --version|-R)
             echo "mkinitrd: dracut compatibility wrapper"
             exit 0;;
-        --force) force=1;;
 	--quiet|-q) quiet=1;;
         *)  if [[ ! $targets ]]; then
             targets=$1
@@ -302,7 +296,8 @@ if [[ $host_only == 1 ]];then
 else
     dracut_args="${dracut_args} --no-hostonly --no-hostonly-cmdline"
 fi
-[[ $force == 1 ]]     && dracut_args="${dracut_args} --force"
+dracut_args="${dracut_args} --force"
+
 [[ $dracut_cmdline ]] && dracut_args="${dracut_args} --kernel-cmdline ${dracut_cmdline}"
 [ -z "$(type -p update-bootloader)" ] && skip_update_bootloader=1
 
