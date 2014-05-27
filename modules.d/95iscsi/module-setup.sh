@@ -41,12 +41,14 @@ installkernel() {
 
     install_ibft() {
         # When iBFT / iscsi_boot is detected:
-        # - mark network as mandatory
+        # - Use 'ip=ibft' to set up iBFT network interface
         # - specify firmware booting cmdline parameter
 
         for d in /sys/firmware/* ; do
             if [ -d ${d}/initiator ] ; then
-                echo "rd.neednet=1" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
+                if [ ${d##*/} = "ibft" ] ; then
+                    echo "ip=ibft" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
+                fi
                 echo "rd.iscsi.firmware=1" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
             fi
         done
