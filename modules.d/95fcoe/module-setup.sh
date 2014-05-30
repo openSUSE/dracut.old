@@ -43,7 +43,16 @@ cmdline() {
 
 # called by dracut
 check() {
+    [[ $hostonly ]] || [[ $mount_needs ]] && {
+        for c in /sys/bus/fcoe/devices/ctlr_* ; do
+            [ -L $c ] || continue
+            break;
+        done
+        return 255
+    }
+
     require_binaries dcbtool fipvlan lldpad ip readlink || return 1
+
     return 0
 }
 
