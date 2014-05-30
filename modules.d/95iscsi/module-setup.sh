@@ -2,6 +2,21 @@
 # -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # ex: ts=8 sw=4 sts=4 et filetype=sh
 
+install_ibft() {
+    # When iBFT / iscsi_boot is detected:
+    # - Use 'ip=ibft' to set up iBFT network interface
+    # - specify firmware booting cmdline parameter
+
+    for d in /sys/firmware/* ; do
+        if [ -d ${d}/initiator ] ; then
+            if [ ${d##*/} = "ibft" ] ; then
+                echo -n "ip=ibft "
+            fi
+            echo -n "rd.iscsi.firmware=1"
+        fi
+    done
+}
+
 # called by dracut
 check() {
     local _rootdev
@@ -39,23 +54,11 @@ depends() {
 installkernel() {
     local _arch=$(uname -m)
 
-    install_ibft() {
-        # When iBFT / iscsi_boot is detected:
-        # - Use 'ip=ibft' to set up iBFT network interface
-        # - specify firmware booting cmdline parameter
-
-        for d in /sys/firmware/* ; do
-            if [ -d ${d}/initiator ] ; then
-                if [ ${d##*/} = "ibft" ] ; then
-                    echo "ip=ibft" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
-                fi
-                echo "rd.iscsi.firmware=1" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
-            fi
-        done
-    }
-
     # Detect iBFT and perform mandatory steps
-    install_ibft
+    if [[ $hostonly_cmdline == "yes" ]] ; then
+        install_ibft > "${initdir}/etc/cmdline.d/95iscsi.conf"
+        echo >> "${initdir}/etc/cmdline.d/95iscsi.conf"
+    fi
 
     instmods bnx2i qla4xxx cxgb3i cxgb4i be2iscsi
     hostonly="" instmods iscsi_tcp iscsi_ibft crc32c iscsi_boot_sysfs
@@ -94,6 +97,11 @@ installkernel() {
 
     { find_kernel_modules_by_path drivers/scsi; if [ "$_arch" = "s390" -o "$_arch" = "s390x" ]; then find_kernel_modules_by_path drivers/s390/scsi; fi;} \
     | iscsi_module_filter  |  instmods
+}
+
+# called by dracut
+cmdline() {
+    install_ibft
 }
 
 # called by dracut
