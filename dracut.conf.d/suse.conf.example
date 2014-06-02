@@ -1,3 +1,14 @@
+# SUSE specifc dracut settings
+#
+# SUSE by default always builds a as small as possible initrd for performance
+# and resource reasons.
+# If you like to build a generic initrd which works on other platforms than
+# on the one dracut/mkinitrd got called comment out below setting(s).
+hostonly="yes"
+hostonly_cmdline="yes"
+
+compress="pixz -6"
+
 i18n_vars="/etc/sysconfig/language:RC_LANG-LANG,RC_LC_ALL-LC_ALL /etc/sysconfig/console:CONSOLE_UNICODEMAP-FONT_UNIMAP,CONSOLE_FONT-FONT,CONSOLE_SCREENMAP-FONT_MAP /etc/sysconfig/keyboard:KEYTABLE-KEYMAP"
 omit_drivers+=" i2o_scsi"
 
