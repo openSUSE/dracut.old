@@ -346,5 +346,6 @@ done
 if [ "$skip_update_bootloader" ] ; then
     echo 2>&1 "Did not refresh the bootloader. You might need to refresh it manually."
 else
+    echo "Update bootloader..."
     update-bootloader --refresh
 fi
