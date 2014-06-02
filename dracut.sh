@@ -1044,37 +1044,6 @@ if [[ $hostonly ]]; then
         push host_devs "$_dev"
     done
 
-    if [[ -f /proc/swaps ]] && [[ -f /etc/fstab ]]; then
-        while read dev type rest; do
-            [[ -b $dev ]] || continue
-            [[ "$type" == "partition" ]] || continue
-
-            while read _d _m _t _o _r; do
-                [[ "$_d" == \#* ]] && continue
-                [[ $_d ]] || continue
-                [[ $_t != "swap" ]] && continue
-                [[ $_m != "swap" ]] && [[ $_m != "none" ]] && continue
-                [[ "$_o" == *noauto* ]] && continue
-                _d=$(expand_persistent_dev "$_d")
-                [[ "$_d" -ef "$dev" ]] || continue
-
-                if [[ -f /etc/crypttab ]]; then
-                    while read _mapper _a _p _o; do
-                        [[ $_mapper = \#* ]] && continue
-                        [[ "$_d" -ef /dev/mapper/"$_mapper" ]] || continue
-                        [[ "$_o" ]] || _o="$_p"
-                        # skip entries with password files
-                        [[ "$_p" == /* ]] && [[ -f $_p ]] && continue 2
-                        # skip mkswap swap
-                        [[ $_o == *swap* ]] && continue 2
-                    done < /etc/crypttab
-                fi
-
-                push host_devs "$(readlink -f "$dev")"
-                break
-            done < /etc/fstab
-        done < /proc/swaps
-    fi
     # record all host modaliases
     declare -A host_modalias
     find  /sys/devices/ -name uevent -print > "$initdir/.modalias"
