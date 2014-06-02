@@ -22,7 +22,6 @@
 
 boot_dir="/boot"
 quiet=0
-host_only=1
 logfile=/var/log/YaST2/mkinitrd.log
 dracut_cmd=dracut
 
@@ -255,7 +254,7 @@ while (($# > 0)); do
 	    dracut_cmdline="${dracut_cmdline} ip=$(ipconfig $static_if)":
 	    ;;
 	-a) read_arg acpi_dsdt "$@" || shift $?
-	    echo "mkinitrd: custom DSDT not yet supported"
+	    echo "Obsolete -a param, use acpi_table_dir= and acpi_override= variables in /etc/dracut.conf.d/"
 	    exit 1
 	    ;;
 	-s) read_arg boot_splash "$@" || shift $?
@@ -291,11 +290,6 @@ targets=( $targets )
 [[ $kernels ]] && kernels=( $kernels )
 
 [[ $logfile ]]        && dracut_args="${dracut_args} --logfile $logfile"
-if [[ $host_only == 1 ]];then
-    dracut_args="${dracut_args} --hostonly --hostonly-cmdline"
-else
-    dracut_args="${dracut_args} --no-hostonly --no-hostonly-cmdline"
-fi
 dracut_args="${dracut_args} --force"
 
 [[ $dracut_cmdline ]] && dracut_args="${dracut_args} --kernel-cmdline ${dracut_cmdline}"
@@ -309,7 +303,6 @@ fi
 [[ $domu_module_list ]] || domu_module_list="${DOMU_INITRD_MODULES}"
 shopt -s extglob
 
-echo "Creating: target|kernel|dracut args "
 for ((i=0 ; $i<${#targets[@]} ; i++)); do
 
     if [[ $img_vers ]];then
@@ -329,20 +322,21 @@ for ((i=0 ; $i<${#targets[@]} ; i++)); do
     modules_all=${modules_all%%+([[:space:]])}
     modules_all=${modules_all##+([[:space:]])}
 
+    echo "Creating initrd: $target"
+
     # Duplicate code: No way found how to redirect output based on $quiet
     if [[ $quiet == 1 ]];then
-	echo "$target|$kernel|$dracut_args_all"
-        # Duplicate code: --add-drivers must not be called with empty string
+        # Duplicate code: --force-drivers must not be called with empty string
         # -> dracut bug workarounded ugly, because of complex whitespace
         # expansion magics
         if [ -n "${modules_all}" ];then
-            $dracut_cmd $dracut_args --add-drivers "${modules_all}" "$target" "$kernel" &>/dev/null
+            $dracut_cmd $dracut_args --force-drivers "${modules_all}" "$target" "$kernel" &>/dev/null
         else
             $dracut_cmd $dracut_args "$target" "$kernel" &>/dev/null
         fi
     else
         if [ -n "${modules_all}" ];then
-            $dracut_cmd $dracut_args --add-drivers "${modules_all}" "$target" "$kernel"
+            $dracut_cmd $dracut_args --force-drivers "${modules_all}" "$target" "$kernel"
         else
             $dracut_cmd $dracut_args "$target" "$kernel"
         fi
