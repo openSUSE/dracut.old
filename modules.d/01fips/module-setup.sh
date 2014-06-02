@@ -19,6 +19,8 @@ installkernel() {
     _fipsmodules+="rmd160 rmd256 rmd320 rot13 salsa20 seed seqiv serpent sha1 sha224 sha256 sha256_generic "
     _fipsmodules+="sha384 sha512 sha512_generic tcrypt tea tnepres twofish wp256 wp384 wp512 xeta xtea xts zlib"
     _fipsmodules+="aes_s390 des_s390 prng sha256_s390 sha_common des_check_key ghash_s390 sha1_s390 sha512_s390"
+    _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
+    _fipsmodules+="ghash-clmulni-intel "
 
     mkdir -m 0755 -p "${initdir}/etc/modprobe.d"
 
@@ -44,7 +46,9 @@ install() {
         libssl.so 'hmaccalc/sha512hmac.hmac' libssl.so.10 \
         libfreeblpriv3.so libfreeblpriv3.chk
 
-    inst_multiple -o prelink
+    # we do not use prelink at SUSE
+    #inst_multiple -o prelink
+
     inst_simple /etc/system-fips
 }
 
