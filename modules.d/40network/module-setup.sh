@@ -11,7 +11,7 @@ check() {
 
     require_binaries ip arping $WICKEDD_DHCP_PATH/wickedd-dhcp4 $WICKEDD_DHCP_PATH/wickedd-dhcp6 || return 1
 
-    return 255
+    return 0
 }
 
 # called by dracut
