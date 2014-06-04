@@ -373,27 +373,20 @@ for p in $(getargs ip=); do
                 do_static ;;
         esac
     done
-    ret=$?
 
-    > /tmp/net.${netif}.up
+    if [ $? -eq 0 ]; then
+        > /tmp/net.${netif}.up
 
-    if [ -e /sys/class/net/${netif}/address ]; then
-        > /tmp/net.$(cat /sys/class/net/${netif}/address).up
+        if [ -e /sys/class/net/${netif}/address ]; then
+            > /tmp/net.$(cat /sys/class/net/${netif}/address).up
+        fi
+
+        setup_net $netif
+        source_hook initqueue/online $netif
+        if [ -z "$manualup" ]; then
+            /sbin/netroot $netif
+        fi
     fi
-
-    case $autoconf in
-        dhcp|on|any|dhcp6)
-            ;;
-        *)
-            if [ $ret -eq 0 ]; then
-                setup_net $netif
-                source_hook initqueue/online $netif
-                if [ -z "$manualup" ]; then
-                    /sbin/netroot $netif
-                fi
-            fi
-            ;;
-    esac
 
     exit 0
 done
