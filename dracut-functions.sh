@@ -1400,6 +1400,17 @@ for_each_module_dir() {
     done
 }
 
+check_supported_kmod() {
+    kmod=$1
+    supported=$(modinfo -k $kernel -F supported $kmod 2>/dev/null)
+    case "$supported" in
+    yes|external) ;;
+    *) dwarn "Module \"$(basename $kmod)\" is unsupported. This may cause" \
+             "problems while booting." ;;
+    esac
+}
+
+
 # Install a single kernel module along with any firmware it may require.
 # $1 = full path to kernel module to install
 install_kmod_with_fw() {
@@ -1462,6 +1473,10 @@ install_kmod_with_fw() {
             fi
         fi
     done
+
+    if [[ "$check_supported" = "yes" ]]; then
+        check_supported_kmod $1
+    fi
     return 0
 }
 
@@ -1506,6 +1521,12 @@ dracut_kernel_post() {
                     [[ $_moddirname ]] && _destpath=${_destpath##$_moddirname/}
                     _destpath=${_destpath##*/lib/modules/$kernel/}
                     inst_simple "$_modpath" "/lib/modules/$kernel/${_destpath}" || exit $?
+                done < "$DRACUT_KERNEL_LAZY_HASHDIR/lazylist.dep"
+            fi
+
+            if [[ $check_supported ]]; then
+                while read _modpath; do
+                    check_supported_kmod $_modpath
                 done < "$DRACUT_KERNEL_LAZY_HASHDIR/lazylist.dep"
             fi
         ) &
