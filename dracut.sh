@@ -193,6 +193,9 @@ Creates initial ramdisk images for preloading modules
   --printsize           Print out the module install size
   --sshkey [SSHKEY]     Add ssh key to initramfs (use with ssh-client module)
   --logfile [FILE]      Logfile to use (overrides configuration setting)
+  --check-supported     Check to ensure that modules are marked supported when
+                        using a kernel that is configured to check the
+                        support status of a module before loading.
 
 If [LIST] has multiple arguments, then you have to put these in quotes.
 
@@ -374,6 +377,7 @@ rearrange_params()
         --long noimageifnotneeded \
         --long early-microcode \
         --long no-early-microcode \
+        --long check-supported \
         -- "$@")
 
     if (( $? != 0 )); then
@@ -557,6 +561,7 @@ while :; do
         --printsize)   printsize="yes";;
         --regenerate-all) regenerate_all="yes";;
         --noimageifnotneeded) noimageifnotneeded="yes";;
+        --check-supported) check_supported="yes" ;;
 
         --) shift; break;;
 
