@@ -43,7 +43,7 @@ installkernel() {
             uhci-hcd \
             xhci-hcd
 
-        instmods yenta_socket scsi_dh_rdac scsi_dh_emc \
+        instmods yenta_socket scsi_dh_rdac scsi_dh_emc scsi_dh_alua \
             atkbd i8042 usbhid hid-apple hid-sunplus hid-cherry hid-logitech \
             hid-logitech-dj hid-microsoft firewire-ohci \
             pcmcia usb_storage nvme hid-hyperv hv-vmbus \
