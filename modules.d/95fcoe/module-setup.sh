@@ -46,9 +46,9 @@ check() {
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         for c in /sys/bus/fcoe/devices/ctlr_* ; do
             [ -L $c ] || continue
-            break;
+            fcoe_ctlr=$c
         done
-        return 255
+        [ -z "$fcoe_ctlr" ] && return 255
     }
 
     require_binaries dcbtool fipvlan lldpad ip readlink || return 1
