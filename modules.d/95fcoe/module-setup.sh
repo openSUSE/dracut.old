@@ -74,8 +74,8 @@ install() {
     mkdir -m 0755 -p "$initdir/var/lib/lldpad"
 
     if [[ $hostonly_cmdline == "yes" ]] ; then
-        cmdline >> "${initdir}/etc/cmdline.d/95fcoe.conf"
-        echo >> "${initdir}/etc/cmdline.d/95fcoe.conf"
+        local _fcoeconf=$(cmdline)
+        [[ $_fcoeconf ]] && printf "%s\n" "$_fcoeconf" >> "${initdir}/etc/cmdline.d/95fcoe.conf"
     fi
     inst "$moddir/fcoe-up.sh" "/sbin/fcoe-up"
     inst "$moddir/fcoe-edd.sh" "/sbin/fcoe-edd"
