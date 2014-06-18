@@ -33,9 +33,8 @@ cmdline() {
 # called by dracut
 install() {
     local _bin
-
-    cmdline  >> "${initdir}/etc/cmdline.d/95resume.conf"
-    echo  >> "${initdir}/etc/cmdline.d/95resume.conf"
+    local _resumeconf=$(cmdline)
+    [[ $_resumeconf ]] && printf "%s\n" "$_resumeconf" >> "${initdir}/etc/cmdline.d/95resume.conf"
 
     # Optional uswsusp support
     for _bin in /usr/sbin/resume /usr/lib/suspend/resume /usr/lib/uswsusp/resume
