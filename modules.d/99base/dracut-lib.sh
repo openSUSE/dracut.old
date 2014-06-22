@@ -857,13 +857,25 @@ wait_for_mount()
     } >> "$hookdir/emergency/90-${_name}.sh"
 }
 
+# get a systemd-compatible unit name from a path
+# (mimicks unit_name_from_path_instance())
 dev_unit_name()
 {
-    _name="${1%%/}"
-    _name="${_name##/}"
-    _name="$(str_replace "$_name" '-' '\x2d')"
-    _name="$(str_replace "$_name" '/' '-')"
-    echo "$_name"
+    local dev="$1"
+
+    if [ "$dev" = "/" -o -z "$dev" ]; then
+        printf -- "-"
+        exit 0
+    fi
+
+    dev="${1%%/}"
+    dev="${dev##/}"
+    dev="$(str_replace "$dev" '\' '\x5c')"
+    dev="$(str_replace "$dev" '-' '\x2d')"
+    dev=${dev/#\./\\x2e}
+    dev="$(str_replace "$dev" '/' '-')"
+
+    printf -- "%s" "$dev"
 }
 
 # wait_for_dev <dev>
