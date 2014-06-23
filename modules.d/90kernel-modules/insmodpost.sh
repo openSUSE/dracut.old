@@ -6,7 +6,7 @@
 
 for modlist in $(getargs rd.driver.post -d rdinsmodpost=); do
     (
-        IFS=,
+        local IFS=,
         for m in $modlist; do
             modprobe $m
         done
