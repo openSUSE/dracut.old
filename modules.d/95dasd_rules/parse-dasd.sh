@@ -51,8 +51,10 @@ for dasd_arg in $(getargs root=) $(getargs resume=); do
                 break;
         esac
         if [ -n "$ccw_arg" ] ; then
+            OLDIFS="$IFS"
             IFS="-"
             set -- $ccw_arg
+            IFS="$OLDIFS"
             create_udev_rule $2
         fi
     )
@@ -60,9 +62,8 @@ done
 
 for dasd_arg in $(getargs rd.dasd=); do
     (
-        IFS=","
+        local IFS=","
         set -- $dasd_arg
-        unset IFS
         while (($# > 0)); do
             case $1 in
                 autodetect|probeonly)
@@ -70,13 +71,14 @@ for dasd_arg in $(getargs rd.dasd=); do
                     ;;
                 *-*)
                     range=$1
+                    OLDIFS="$IFS"
                     IFS="-"
                     set -- $range
                     start=${1#0.0.}
                     shift
                     end=${1#0.0.}
                     shift
-                    unset IFS
+                    IFS="$OLDIFS"
                     for dev in $(seq $(( 10#$start )) $(( 10#$end )) ) ; do
                         create_udev_rule $(printf "0.0.%04d" "$dev")
                     done

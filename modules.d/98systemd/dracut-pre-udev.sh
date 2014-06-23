@@ -26,7 +26,7 @@ fi
 
 for i in $(getargs rd.driver.pre -d rdloaddriver=); do
     (
-        IFS=,
+        local IFS=,
         for p in $i; do
             modprobe $p 2>&1 | vinfo
         done
@@ -38,7 +38,7 @@ done
 
 for i in $(getargs rd.driver.blacklist -d rdblacklist=); do
     (
-        IFS=,
+        local IFS=,
         for p in $i; do
             echo "blacklist $p" >>  $_modprobe_d/initramfsblacklist.conf
         done
