@@ -10,6 +10,7 @@ if [ -z $CIO_IGNORE ] ; then
     return
 fi
 if [ -n "$CIO_ACCEPT" ] ; then
+    OLDIFS="$IFS"
     IFS=,
     set -- $CIO_ACCEPT
     while (($# > 0)) ; do
@@ -17,5 +18,5 @@ if [ -n "$CIO_ACCEPT" ] ; then
         cio_ignore --remove $1
         shift
     done
-    unset IFS
+    IFS="$OLDIFS"
 fi
