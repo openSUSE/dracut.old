@@ -41,6 +41,17 @@ EOF
     fi
 }
 
+if [[ -f /sys/firmware/ipl/ipl_type &&
+            $(</sys/firmare/ipl/ipl_type) = "fcp" ]] ; then
+    (
+        local _wwpn=$(cat /sys/firmware/ipl/wwpn)
+        local _lun=$(cat /sys/firmware/ipl/lun)
+        local _ccw=$(cat /sys/firmware/ipl/device)
+
+        create_udev_rule $_ccw $_wwpn $_lun
+    )
+fi
+
 for zfcp_arg in $(getargs rd.zfcp); do
     (
         local IFS=","
@@ -51,6 +62,9 @@ done
 
 for zfcp_arg in $(getargs root=) $(getargs resume=); do
     (
+        local _wwpn
+        local _lun
+
         case $zfcp_arg in
             /dev/disk/by-path/ccw-*)
                 ccw_arg=${zfcp_arg##*/}
@@ -61,8 +75,8 @@ for zfcp_arg in $(getargs root=) $(getargs resume=); do
             IFS="-"
             set -- $ccw_arg
             IFS="$OLDIFS"
-            wwpn=${4%:*}
-            lun=${4#*:}
+            _wwpn=${4%:*}
+            _lun=${4#*:}
             create_udev_rule $2 $wwpn $lun
         fi
     )
