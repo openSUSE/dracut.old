@@ -4,7 +4,8 @@
 
 # called by dracut
 check() {
-    [ -e /etc/localtime -a -e /etc/adjtime ]
+    [ -e /etc/localtime -a -e /etc/adjtime ] || return 1
+    require_binaries /sbin/hwclock || return 1
 }
 
 # called by dracut
