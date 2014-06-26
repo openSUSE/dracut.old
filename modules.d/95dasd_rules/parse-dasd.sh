@@ -31,6 +31,10 @@ create_udev_rule() {
     esac
     [ -z "${_drv}" ] && return 0
 
+    if [ -x /sbin/cio_ignore ] && cio_ignore -i $ccw > /dev/null ; then
+        cio_ignore -r $ccw
+    fi
+
     [ -e ${_rule} ] && return 0
 
     cat > $_rule <<EOF
@@ -38,9 +42,6 @@ ACTION=="add", SUBSYSTEM=="ccw", KERNEL=="$ccw", IMPORT{program}="collect $ccw %
 ACTION=="add", SUBSYSTEM=="drivers", KERNEL=="$_drv", IMPORT{program}="collect $ccw %k ${ccw} $_drv"
 ACTION=="add", ENV{COLLECT_$ccw}=="0", ATTR{[ccw/$ccw]online}="1"
 EOF
-    if [ -x /sbin/cio_ignore ] && ! cio_ignore -i $ccw > /dev/null ; then
-        cio_ignore -r $ccw
-    fi
 }
 
 for dasd_arg in $(getargs root=) $(getargs resume=); do
@@ -48,7 +49,7 @@ for dasd_arg in $(getargs root=) $(getargs resume=); do
         case $dasd_arg in
             /dev/disk/by-path/ccw-*)
                 ccw_arg=${dasd_arg##*/}
-                break;
+                ;;
         esac
         if [ -n "$ccw_arg" ] ; then
             OLDIFS="$IFS"
@@ -79,8 +80,8 @@ for dasd_arg in $(getargs rd.dasd=); do
                     end=${1#0.0.}
                     shift
                     IFS="$OLDIFS"
-                    for dev in $(seq $(( 10#$start )) $(( 10#$end )) ) ; do
-                        create_udev_rule $(printf "0.0.%04d" "$dev")
+                    for dev in $(seq $(( 16#$start )) $(( 16#$end )) ) ; do
+                        create_udev_rule $(printf "0.0.%04x" "$dev")
                     done
                     ;;
                 *)
@@ -89,7 +90,7 @@ for dasd_arg in $(getargs rd.dasd=); do
                         ro=1
                     fi
                     dev=${dev#0.0.}
-                    create_udev_rule $(printf "0.0.%04d" $(( 10#$dev )) )
+                    create_udev_rule $(printf "0.0.%04x" $(( 16#$dev )) )
                     shift
                     ;;
             esac
