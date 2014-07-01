@@ -18,6 +18,8 @@ netif=$1
 use_bridge='false'
 use_vlan='false'
 
+[ -d /var/lib/wicked ] || mkdir -p /var/lib/wicked
+
 # enslave this interface to bond?
 for i in /tmp/bond.*.info; do
     [ -e "$i" ] || continue
