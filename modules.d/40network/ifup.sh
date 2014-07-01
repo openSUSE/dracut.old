@@ -264,6 +264,8 @@ if [ -z "$NO_BRIDGE_MASTER" ]; then
     done
 fi
 
+[ -d /var/lib/wicked ] || mkdir -p /var/lib/wicked
+
 # enslave this interface to bond?
 if [ -z "$NO_BOND_MASTER" ]; then
     for i in /tmp/bond.*.info; do
