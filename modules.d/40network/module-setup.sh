@@ -101,6 +101,10 @@ install() {
 
     _arch=$(uname -m)
 
+    [[ $hostonly ]] && {
+        inst_multiple /etc/sysconfig/network/ifcfg-*
+    }
+
     inst_libdir_file {"tls/$_arch/",tls/,"$_arch/",}"libnss_dns.so.*" \
         {"tls/$_arch/",tls/,"$_arch/",}"libnss_mdns4_minimal.so.*"
 
