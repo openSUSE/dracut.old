@@ -64,7 +64,13 @@ for p in $(getargs ip=); do
     # Error checking for autoconf in combination with other values
     case $autoconf in
         error) die "Error parsing option 'ip=$p'";;
-        bootp|rarp|both) die "Sorry, ip=$autoconf is currenty unsupported";;
+        bootp|rarp|both) die "Sorry, ip=$autoconf is currently unsupported";;
+        static)
+            if [ ! -e /etc/sysconfig/network/ifcfg-${dev} ] ; then
+                warn "No ifcfg configuration present for interface $dev, skipping"
+                continue
+            fi
+            ;;
         none|off)
             [ -z "$ip" ] && \
             die "For argument 'ip=$p'\nValue '$autoconf' without static configuration does not make sense"
