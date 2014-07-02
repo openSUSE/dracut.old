@@ -399,6 +399,18 @@ for p in $(getargs ip=); do
     [ "$use_bridge" != 'true' ] && \
     [ "$use_vlan" != 'true' ] && continue
 
+    if [ "$autoconf" = "static" ] &&
+        [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
+        # Pull in existing static configuration
+        . /etc/sysconfig/network/ifcfg-${netif}
+        ip=${IPADDR}
+        mask=${PREFIXLEN}
+        mtu=${MTU}
+        server=${REMOTE_IPADDR}
+        gw=${GATEWAY}
+        autoconf=${BOOTPROTO}
+    fi
+
     # setup nameserver
     namesrv="$dns1 $dns2 $(getargs nameserver)"
     for s in $namesrv; do
@@ -411,7 +423,7 @@ for p in $(getargs ip=); do
     done > /tmp/net.$netif.override
 
     case $autoconf in
-        dhcp|on|any)
+        dhcp4|dhcp|on|any)
             do_dhcp -4 ;;
         dhcp6)
             load_ipv6
