@@ -76,9 +76,11 @@ install_iscsiroot() {
         esac
     done
 
-    local_address=$(ip -o route get to $iscsi_address | cut -f 1 -d ' ')
-    ifname=$(ip addr show to $local_address | head -1 | sed -n 's/[0-9]*: \(.*\): .*/\1/p')
-    if [ -d /sys/class/net/$ifname/address ] ; then
+    local_address=$(ip -o route get to $iscsi_address | sed -n 's/.*src \([0-9a-f.:]*\).*/\1/p')
+    ifname=$(ip -o route get to $iscsi_address | sed -n 's/.*dev \([^ ]*\).*/\1/p')
+    printf 'ip=%s:static ' ${ifname}
+
+    if [ -e /sys/class/net/$ifname/address ] ; then
         ifmac=$(cat /sys/class/net/$ifname/address)
         printf 'ifname=%s:%s ' ${ifname} ${ifmac}
     fi
