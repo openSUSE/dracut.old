@@ -450,7 +450,7 @@ for p in $(getargs ip=); do
 
     for autoopt in $(str_replace "$autoconf" "," " "); do
         case $autoopt in
-            dhcp|on|any)
+            dhcp4|dhcp|on|any)
                 do_dhcp -4 ;;
             dhcp6)
                 load_ipv6
@@ -462,6 +462,18 @@ for p in $(getargs ip=); do
         esac
     done
     ret=$?
+
+    if [ "$autoconf" = "static" ] &&
+        [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
+        # Pull in existing static configuration
+        . /etc/sysconfig/network/ifcfg-${netif}
+        ip=${IPADDR}
+        mask=${PREFIXLEN}
+        mtu=${MTU}
+        server=${REMOTE_IPADDR}
+        gw=${GATEWAY}
+        autoconf=${BOOTPROTO}
+    fi
 
     # setup nameserver
     for s in "$dns1" "$dns2" $(getargs nameserver); do
