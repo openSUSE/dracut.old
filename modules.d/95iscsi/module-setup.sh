@@ -43,6 +43,75 @@ install_ibft() {
     done
 }
 
+install_iscsiroot() {
+    local devpath=$1
+    local scsi_path iscsi_lun session c d conn
+    local iscsi_session iscsi_address iscsi_port iscsi_targetname iscsi_tpgt
+
+    scsi_path=${devpath%%/block*}
+    [ "$scsi_path" = "$devpath" ] && return 1
+    iscsi_lun=${scsi_path##*:}
+    [ "$iscsi_lun" = "$scsi_path" ] && return 1
+    session=${devpath%%/target*}
+    [ "$session" = "$devpath" ] && return 1
+    iscsi_session=${session##*/}
+    [ "$iscsi_session" = "$session" ] && return 1
+
+    for d in ${session}/* ; do
+        case $d in
+	    *connection*)
+	        c=${d##*/}
+	        conn=${d}/iscsi_connection/${c}
+	        if [ -d ${conn} ] ; then
+		    iscsi_address=$(cat ${conn}/persistent_address)
+		    iscsi_port=$(cat ${conn}/persistent_port)
+	        fi
+	        ;;
+	    *session)
+	        if [ -d ${d}/${iscsi_session} ] ; then
+                    iscsi_initiator=$(cat ${d}/${iscsi_session}/initiatorname)
+		    iscsi_targetname=$(cat ${d}/${iscsi_session}/targetname)
+	        fi
+	        ;;
+        esac
+    done
+
+    local_address=$(ip -o route get to $iscsi_address | cut -f 1 -d ' ')
+    ifname=$(ip addr show to $local_address | head -1 | sed -n 's/[0-9]*: \(.*\): .*/\1/p')
+    if [ -d /sys/class/net/$ifname/address ] ; then
+        ifmac=$(cat /sys/class/net/$ifname/address)
+        printf 'ifname=%s:%s ' ${ifname} ${ifmac}
+    fi
+
+    if [ -n "$iscsi_address" -a -n "$iscsi_targetname" ] ; then
+        if [ -n "$iscsi_port" -a "$iscsi_port" -eq 3260 ] ; then
+            iscsi_port=
+        fi
+        if [ -n "$iscsi_lun" -a "$iscsi_lun" -eq 0 ] ; then
+            iscsi_lun=
+        fi
+        echo "rd.iscsi.initiator=${iscsi_initiator} netroot=iscsi:${iscsi_address}::${iscsi_port}:${iscsi_lun}:${iscsi_targetname}"
+    fi
+    return 0
+}
+
+
+install_softiscsi() {
+    [ -d /sys/firmware/ibft ] && return 0
+
+    is_softiscsi() {
+        local _dev=$1
+        local iscsi_dev
+
+        [[ -L "/sys/dev/block/$_dev" ]] || return
+        iscsi_dev=$(cd -P /sys/dev/block/$_dev; echo $PWD)
+        install_iscsiroot $iscsi_dev
+    }
+
+    for_each_host_dev_and_slaves is_softiscsi || return 255
+    return 0
+}
+
 # called by dracut
 check() {
     local _rootdev
@@ -121,7 +190,12 @@ installkernel() {
 
 # called by dracut
 cmdline() {
-    install_ibft
+    local _iscsiconf=$(install_ibft)
+    if [ "$_iscsiconf" ] ; then
+        echo ${_iscsiconf}
+    else
+        install_softiscsi
+    fi
 }
 
 # called by dracut
@@ -132,8 +206,8 @@ install() {
 
     # Detect iBFT and perform mandatory steps
     if [[ $hostonly_cmdline == "yes" ]] ; then
-        local _ibftconf=$(install_ibft)
-        [[ $_ibftconf ]] && printf "%s\n" "$_ibftconf" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
+        local _iscsiconf=$(cmdline)
+        [[ $_iscsiconf ]] && printf "%s\n" "$_iscsiconf" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
     fi
 
     inst_hook cmdline 90 "$moddir/parse-iscsiroot.sh"
