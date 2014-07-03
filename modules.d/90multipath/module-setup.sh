@@ -30,6 +30,15 @@ depends() {
 }
 
 # called by dracut
+cmdline() {
+    for m in scsi_dh_alua scsi_dh_emc scsi_dh_rdac ; do
+        if module_is_host_only $m ; then
+            printf 'rd.driver.pre=%s ' "$m"
+        fi
+    done
+}
+
+# called by dracut
 installkernel() {
     local _ret
     local _arch=$(uname -m)
@@ -90,6 +99,11 @@ install() {
 
     inst_libdir_file "libmultipath*" "multipath/*"
     inst_libdir_file 'libgcc_s.so*'
+
+    if [[ $hostonly_cmdline ]] ; then
+        local _conf=$(cmdline)
+        [[ $_conf ]] && echo "$_conf" >> "${initdir}/etc/cmdline.d/90multipath.conf"
+    fi
 
     if dracut_module_included "systemd"; then
         inst_simple "${moddir}/multipathd.service" "${systemdsystemunitdir}/multipathd.service"
