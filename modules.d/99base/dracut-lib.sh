@@ -876,11 +876,15 @@ wait_for_dev()
     local _name
     local _needreload
     local _noreload
+    local _timeout
 
     if [ "$1" = "-n" ]; then
         _noreload=1
         shift
     fi
+
+    _timeout=$(getarg rd.timeout)
+    _timeout=${_timeout:-0}
 
     _name="$(str_replace "$1" '/' '\x2f')"
 
@@ -905,7 +909,7 @@ wait_for_dev()
             mkdir -p ${PREFIX}/etc/systemd/system/${_name}.device.d
             {
                 echo "[Unit]"
-                echo "JobTimeoutSec=0"
+                echo "JobTimeoutSec=$_timeout"
             } > ${PREFIX}/etc/systemd/system/${_name}.device.d/timeout.conf
             _needreload=1
         fi
