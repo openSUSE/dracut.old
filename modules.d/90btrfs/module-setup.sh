@@ -46,7 +46,8 @@ install() {
         inst_hook initqueue/timeout 10 "$moddir/btrfs_timeout.sh"
     fi
 
-    inst_multiple -o btrfsck btrfs-zero-log
+    # rescue utilities
+    inst_multiple btrfs-zero-log btrfs-image btrfs-dump-super
+    inst_multiple btrfs-debug-tree mkfs.btrfs btrfstune btrfs-select-super
     inst $(command -v btrfs) /sbin/btrfs
 }
-
