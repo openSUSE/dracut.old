@@ -1479,6 +1479,12 @@ if ! ( echo $PARMS_TO_STORE > $initdir/lib/dracut/build-parameter.txt ); then
     exit 1
 fi
 
+if [[ $hostonly_cmdline ]] ; then
+    dinfo "Stored kernel commandline:"
+    for conf in $initdir/etc/cmdline.d/*.conf ; do
+        dinfo "$(< $conf)"
+    done
+fi
 rm -f -- "$outfile"
 dinfo "*** Creating image file ***"
 
