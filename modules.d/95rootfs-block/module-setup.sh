@@ -34,9 +34,9 @@ cmdline_journal() {
 cmdline_rootfs() {
     local dev=/dev/block/$(find_root_block_device)
     if [ -e $dev ]; then
-        printf "root=%s" "$(shorten_persistent_dev "$(get_persistent_dev "$dev")")"
-        printf "rootflags=%s" "$(find_mp_fsopts /)"
-        printf "rootfstype=%s\n" "$(find_mp_fstype /)"
+        printf "root=%s rootflags=%s rootfstype=%s\n" \
+            "$(shorten_persistent_dev "$(get_persistent_dev "$dev")")" \
+            "$(find_mp_fsopts /)" "$(find_mp_fstype /)"
     fi
 }
 
