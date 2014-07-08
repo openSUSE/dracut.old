@@ -64,15 +64,6 @@ if [[ ! -e "$testfile" ]]; then
 fi
 rm -f -- "$testfile"
 
-testfile="$ROOT/usr/.usrmovecheck$$"
-rm -f -- "$testfile"
-> "$testfile"
-if [[ ! -e "$testfile" ]]; then
-    echo "Cannot write to $ROOT/usr/"
-    exit 1
-fi
-rm -f -- "$testfile"
-
 find_mount() {
     local dev mnt etc wanted_dev
     wanted_dev="$(readlink -e -q $1)"
