@@ -3,15 +3,15 @@
 # ex: ts=8 sw=4 sts=4 et filetype=sh
 
 get_ibft_mod() {
-    local ibft_mac=$1 IFS
+    local ibft_mac=$1
+    local iface_mac iface_mod
     # Return the iSCSI offload module for a given MAC address
-    iscsiadm -m iface | while read iface_name iface_desc ; do
-        OLDIFS="$IFS"
-        IFS=$','
-        set -- $iface_desc
-        IFS="$OLDIFS"
-        if [ "$ibft_mac" = "$2" ] ; then
-            echo $1
+    for iface_desc in $(iscsiadm -m iface | cut -f 2 -d ' '); do
+        iface_mod=${iface_desc%%,*}
+        iface_mac=${iface_desc#*,}
+        iface_mac=${iface_mac%%,*}
+        if [ "$ibft_mac" = "$iface_mac" ] ; then
+            echo $iface_mod
             return 0
         fi
         
