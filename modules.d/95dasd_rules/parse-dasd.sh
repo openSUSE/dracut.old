@@ -45,7 +45,7 @@ EOF
 }
 
 if [[ -f /sys/firmware/ipl/ipl_type &&
-            $(</sys/firmare/ipl/ipl_type) = "ccw" ]] ; then
+            $(</sys/firmware/ipl/ipl_type) = "ccw" ]] ; then
     (
         local _ccw=$(cat /sys/firmware/ipl/device)
 
