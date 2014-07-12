@@ -1666,6 +1666,13 @@ instmods() {
             --*) _mpargs+=" $_mod" ;;
             *)
                 _mod=${_mod##*/}
+                # Check for aliased modules
+                _modalias=$(modinfo -k $kernel -F filename $_mod 2> /dev/null)
+                _modalias=${_modalias%.ko}
+                if [ "${_modalias##*/}" != "$_mod" ] ; then
+                    _mod=${_modalias##*/}
+                fi
+
                 # if we are already installed, skip this module and go on
                 # to the next one.
                 if [[ $DRACUT_KERNEL_LAZY_HASHDIR ]] && \
