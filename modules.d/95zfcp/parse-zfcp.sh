@@ -6,8 +6,10 @@ getargbool 1 rd.zfcp.conf -d -n rd_NO_ZFCPCONF || rm /etc/zfcp.conf
 
 for zfcp_arg in $(getargs rd.zfcp -d 'rd_ZFCP='); do
     (
+        local OLDIFS="$IFS"
         local IFS=","
         set $zfcp_arg
+        IFS="$OLDIFS"
         echo "$@" >> /etc/zfcp.conf
     )
 done
