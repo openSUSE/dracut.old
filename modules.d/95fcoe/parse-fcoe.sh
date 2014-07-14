@@ -28,8 +28,10 @@ modprobe bnx2fc >/dev/null 2>&1
 udevadm settle --timeout=30
 
 parse_fcoe_opts() {
+    local OLDIFS="$IFS"
     local IFS=:
     set $fcoe
+    IFS="$OLDIFS"
 
     case $# in
         2)
