@@ -9,6 +9,10 @@ create_udev_rule() {
     local _rule=/etc/udev/rules.d/51-zfcp-${ccw}.rules
     local _cu_type _dev_type
 
+    if [ -x /sbin/cio_ignore ] && cio_ignore -i $ccw > /dev/null ; then
+        cio_ignore -r $ccw
+    fi
+
     if [ -e /sys/bus/ccw/devices/${ccw} ] ; then
         read _cu_type < /sys/bus/ccw/devices/${ccw}/cutype
         read _dev_type < /sys/bus/ccw/devices/${ccw}/devtype
@@ -18,10 +22,6 @@ create_udev_rule() {
     fi
     if [ "$_dev_type" != "1732/03" ] && [ "$_dev_type" != "1732/04" ] ; then
         return 0;
-    fi
-
-    if [ -x /sbin/cio_ignore ] && cio_ignore -i $ccw > /dev/null ; then
-        cio_ignore -r $ccw
     fi
 
     [ -e ${_rule} ] && return 0
@@ -54,8 +54,10 @@ fi
 
 for zfcp_arg in $(getargs rd.zfcp); do
     (
+        local OLDIFS="$IFS"
         local IFS=","
         set $zfcp_arg
+        IFS="$OLDIFS"
         create_udev_rule $1 $2 $3
     )
 done
