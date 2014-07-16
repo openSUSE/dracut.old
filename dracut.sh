@@ -632,7 +632,7 @@ if ! [[ $outfile ]]; then
     if [[ $MACHINE_ID ]] && ( [[ -d /boot/${MACHINE_ID} ]] || [[ -L /boot/${MACHINE_ID} ]] ); then
         outfile="/boot/${MACHINE_ID}/$kernel/initrd"
     else
-        outfile="/boot/initramfs-$kernel.img"
+        outfile="/boot/initrd-$kernel"
     fi
 fi
 
