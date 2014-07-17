@@ -47,7 +47,7 @@ install() {
     fi
 
     # rescue utilities
-    inst_multiple btrfs-zero-log btrfs-image btrfs-dump-super
-    inst_multiple btrfs-debug-tree mkfs.btrfs btrfstune btrfs-select-super
+    inst_multiple btrfs-zero-log btrfs-image btrfs-debug-tree \
+        mkfs.btrfs btrfstune
     inst $(command -v btrfs) /sbin/btrfs
 }
