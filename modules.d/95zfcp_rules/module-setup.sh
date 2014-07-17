@@ -54,7 +54,7 @@ install() {
         local _zfcp
 
         for _zfcp in $(cmdline) ; do
-            printf "%s\n" "$zfcp" >> "${initdir}/etc/cmdline.d/94zfcp.conf"
+            printf "%s\n" "$_zfcp" >> "${initdir}/etc/cmdline.d/94zfcp.conf"
         done
     fi
     if [[ $hostonly ]] ; then
