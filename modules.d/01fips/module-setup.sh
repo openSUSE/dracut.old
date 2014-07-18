@@ -23,7 +23,7 @@ installkernel() {
     _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
     _fipsmodules+="ghash-clmulni-intel "
 
-    # once it is in the kernel: _fipsmodules+="drbg "
+    _fipsmodules+="drbg "
 
     mkdir -m 0755 -p "${initdir}/etc/modprobe.d"
 
