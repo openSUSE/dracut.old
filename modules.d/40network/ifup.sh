@@ -223,13 +223,14 @@ do_static() {
     linkup $netif
     [ -n "$macaddr" ] && ip link set address $macaddr dev $netif
     [ -n "$mtu" ] && ip link set mtu $mtu dev $netif
+    [ -n "$mask" -a -z "$prefix" ] && prefix=$(mask_to_prefix $mask)
     if strglobin $ip '*:*:*'; then
         # note no ip addr flush for ipv6
-        ip addr add $ip/$mask ${srv:+peer $srv} dev $netif
+        ip addr add $ip/$prefix ${srv:+peer $srv} dev $netif
         wait_for_ipv6_dad $netif
     else
         ip addr flush dev $netif
-        ip addr add $ip/$mask ${srv:+peer $srv} brd + dev $netif
+        ip addr add $ip/$prefix ${srv:+peer $srv} brd + dev $netif
     fi
 
     [ -n "$gw" ] && echo ip route add default via $gw dev $netif > /tmp/net.$netif.gw
@@ -404,7 +405,7 @@ for p in $(getargs ip=); do
         # Pull in existing static configuration
         . /etc/sysconfig/network/ifcfg-${netif}
         ip=${IPADDR}
-        mask=${PREFIXLEN}
+        prefix=${PREFIXLEN}
         mtu=${MTU}
         server=${REMOTE_IPADDR}
         gw=${GATEWAY}
@@ -418,7 +419,7 @@ for p in $(getargs ip=); do
     done
 
     # Store config for later use
-    for i in ip srv gw mask hostname macaddr dns1 dns2; do
+    for i in ip srv gw mask prefix hostname macaddr dns1 dns2; do
         eval '[ "$'$i'" ] && echo '$i'="$'$i'"'
     done > /tmp/net.$netif.override
 
