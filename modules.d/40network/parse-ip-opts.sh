@@ -74,7 +74,7 @@ for p in $(getargs ip=); do
         none|off)
             [ -z "$ip" ] && \
             die "For argument 'ip=$p'\nValue '$autoconf' without static configuration does not make sense"
-            [ -z "$mask" ] && \
+            [ -z "$mask" -a -z "$prefix" ] && \
                 die "Sorry, automatic calculation of netmask is not yet supported"
             ;;
         auto6);;
