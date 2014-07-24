@@ -44,6 +44,10 @@ cmdline() {
     done
 }
 
+installkernel() {
+    hostonly='' instmods dm-snapshot
+}
+
 # called by dracut
 install() {
     local _i
