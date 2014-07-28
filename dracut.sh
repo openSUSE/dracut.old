@@ -106,6 +106,7 @@ Creates initial ramdisk images for preloading modules
   --noprelink           Do not prelink binaries in the initramfs
   --hardlink            Hardlink files in the initramfs
   --nohardlink          Do not hardlink files in the initramfs
+  --nowaitforswap       Do not wait for swap getting active on boot
   --prefix [DIR]        Prefix initramfs files with [DIR]
   --noprefix            Do not prefix initramfs files
   --mdadmconf           Include local /etc/mdadm.conf
@@ -341,6 +342,7 @@ rearrange_params()
         --long noprelink \
         --long hardlink \
         --long nohardlink \
+        --long nowaitforswap \
         --long noprefix \
         --long mdadmconf \
         --long nomdadmconf \
@@ -516,6 +518,7 @@ while :; do
         --noprelink)   do_prelink_l="no";;
         --hardlink)    do_hardlink_l="yes";;
         --nohardlink)  do_hardlink_l="no";;
+        --nowaitforswap)  nowaitforswap_l="yes";;
         --noprefix)    prefix_l="/";;
         --mdadmconf)   mdadmconf_l="yes";;
         --nomdadmconf) mdadmconf_l="no";;
@@ -776,6 +779,7 @@ stdloglvl=$((stdloglvl + verbosity_mod_l))
 [[ $do_prelink ]] || do_prelink=yes
 [[ $do_hardlink_l ]] && do_hardlink=$do_hardlink_l
 [[ $do_hardlink ]] || do_hardlink=yes
+[[ $nowaitforswap_l ]] && nowaitforswap="yes"
 [[ $prefix_l ]] && prefix=$prefix_l
 [[ $prefix = "/" ]] && unset prefix
 [[ $hostonly_l ]] && hostonly=$hostonly_l
@@ -1049,6 +1053,37 @@ if [[ $hostonly ]]; then
         push host_devs "$_dev"
     done
 
+    if [[ $nowaitforswap != yes ]] && [[ -f /proc/swaps ]] && [[ -f /etc/fstab ]]; then
+        while read dev type rest; do
+            [[ -b $dev ]] || continue
+            [[ "$type" == "partition" ]] || continue
+
+            while read _d _m _t _o _r; do
+                [[ "$_d" == \#* ]] && continue
+                [[ $_d ]] || continue
+                [[ $_t != "swap" ]] && continue
+                [[ $_m != "swap" ]] && [[ $_m != "none" ]] && continue
+                [[ "$_o" == *noauto* ]] && continue
+                _d=$(expand_persistent_dev "$_d")
+                [[ "$_d" -ef "$dev" ]] || continue
+
+                if [[ -f /etc/crypttab ]]; then
+                    while read _mapper _a _p _o; do
+                        [[ $_mapper = \#* ]] && continue
+                        [[ "$_d" -ef /dev/mapper/"$_mapper" ]] || continue
+                        [[ "$_o" ]] || _o="$_p"
+                        # skip entries with password files
+                        [[ "$_p" == /* ]] && [[ -f $_p ]] && continue 2
+                        # skip mkswap swap
+                        [[ $_o == *swap* ]] && continue 2
+                    done < /etc/crypttab
+                fi
+
+                push host_devs "$(readlink -f "$dev")"
+                break
+            done < /etc/fstab
+        done < /proc/swaps
+    fi
     # record all host modaliases
     declare -A host_modalias
     find  /sys/devices/ -name uevent -print > "$initdir/.modalias"
