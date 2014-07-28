@@ -25,7 +25,7 @@ depends() {
 
 # called by dracut
 installkernel() {
-    instmods nfs sunrpc ipv6 nfsv2 nfsv3 nfsv4 nfs_acl nfs_layout_nfsv41_files
+    hostonly='' instmods nfs sunrpc ipv6 nfsv2 nfsv3 nfsv4 nfs_acl nfs_layout_nfsv41_files lockd rpcsec_gss_krb5 auth_rpcgss
 }
 
 cmdline() {
