@@ -83,25 +83,23 @@ for p in $(getargs ip=); do
                     die "Sorry, automatic calculation of netmask is not yet supported"
                 ;;
             auto6);;
-            dhcp|dhcp6|on|any) \
-                [ -n "$NEEDBOOTDEV" ] && [ -z "$dev" ] && \
-                    die "Sorry, 'ip=$p' does not make sense for multiple interface configurations"
-                [ -n "$ip" ] && \
-                    die "For argument 'ip=$p'\nSorry, setting client-ip does not make sense for '$autoopt'"
-                ;;
+            dhcp|dhcp6|on|any);;
             *) die "For argument 'ip=$p'\nSorry, unknown value '$autoopt'";;
         esac
     done
 
+    dup=0
     if [ -n "$dev" ] ; then
         # We don't like duplicate device configs
         if [ -n "$IFACES" ] ; then
             for i in $IFACES ; do
-                [ "$dev" = "$i" ] && die "For argument 'ip=$p'\nDuplication configurations for '$dev'"
+                [ "$dev" = "$i" ] && dup=1 && break
             done
         fi
         # IFACES list for later use
-        IFACES="$IFACES $dev"
+        if [ $dup -eq 0 ]; then
+            IFACES="$IFACES $dev"
+        fi
     fi
 
     # Do we need to check for specific options?
