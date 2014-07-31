@@ -111,6 +111,7 @@ ifdown() {
     ip addr flush dev $netif
     echo "#empty" > /etc/resolv.conf
     rm -f -- /tmp/net.$netif.did-setup
+    rm -f -- /tmp/net.$netif.conf
     [ -e /sys/class/net/$netif/address ] && \
         rm -f -- /tmp/net.$(cat /sys/class/net/$netif/address).did-setup
     # TODO: send "offline" uevent?
@@ -165,9 +166,6 @@ setup_net() {
     fi
     unset layer2
 
-    > /tmp/net.$netif.did-setup
-    [ -e /sys/class/net/$netif/address ] && \
-        > /tmp/net.$(cat /sys/class/net/$netif/address).did-setup
 }
 
 save_netinfo() {
