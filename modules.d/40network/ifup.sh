@@ -91,6 +91,7 @@ else
 fi
 
 dhcp_apply() {
+    unset IPADDR INTERFACE BROADCAST NETWORK PREFIXLEN ROUTES GATEWAYS HOSTNAME DNSDOMAIN DNSSEARCH DNSSERVERS
     if [ -f /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} ]; then
         . /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
     else
@@ -132,24 +133,37 @@ dhcp_apply() {
     [ -n "${HOSTNAME}" ] && hostname "$HOSTNAME"
 
     # If nameserver= has not been specified, use what dhcp provides
-    if [ ! -s /tmp/net.$netif.resolv.conf ]; then
+    if [ ! -s /tmp/net.$netif.resolv.conf.ipv${1:1:1} ]; then
         if [ -n "${DNSDOMAIN}" ]; then
             echo domain "${DNSDOMAIN}"
-        fi >> /tmp/net.$netif.resolv.conf
+        fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
 
         if [ -n "${DNSSEARCH}" ]; then
             echo search "${DNSSEARCH}"
-        fi >> /tmp/net.$netif.resolv.conf
+        fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
 
         if  [ -n "${DNSSERVERS}" ] ; then
             for s in ${DNSSERVERS}; do
                 echo nameserver "$s"
             done
-        fi >> /tmp/net.$netif.resolv.conf
+        fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
     fi
-    [ -e /tmp/net.$netif.resolv.conf ] && \
-        cp -f /tmp/net.$netif.resolv.conf /etc/resolv.conf
-
+    # copy resolv.conf if it doesn't exist yet, modify otherwise
+    if [ -e /tmp/net.$netif.resolv.conf.ipv${1:1:1} ] && [ ! -e /etc/resolv.conf ]; then
+        cp -f /tmp/net.$netif.resolv.conf.ipv${1:1:1} /etc/resolv.conf
+    else
+        if [ -n "$(sed -n '/^search .*$/p' /etc/resolv.conf)" ]; then
+            sed -i "s/\(^search .*\)$/\1 ${DNSSEARCH}/" /etc/resolv.conf
+        else
+            echo search ${DNSSEARCH} >> /etc/resolv.conf
+        fi
+        if  [ -n "${DNSSERVERS}" ] ; then
+            for s in ${DNSSERVERS}; do
+                echo nameserver "$s"
+            done
+        fi >> /etc/resolv.conf
+    fi
+        
     info "DHCP is finished successfully"
     return 0
 }
@@ -171,9 +185,6 @@ do_dhcp() {
         dhclient="wickedd-dhcp6"
     fi
 
-    # Address changed
-    ip $1 addr flush dev "$netif"
-
     if ! iface_has_link $netif; then
         warn "No carrier detected"
         warn "Trying to set $netif up..."
@@ -188,7 +199,6 @@ do_dhcp() {
     $dhclient --test $netif > /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
     dhcp_apply $1 || return $?
 
-    echo $netif > /tmp/net.${netif}.did-setup
     echo $netif > /tmp/setup_net_${netif}.ok
     return 0
 }
@@ -218,6 +228,31 @@ do_ipv6auto() {
 
 # Handle static ip configuration
 do_static() {
+    if [ "$autoconf" = "static" ] &&
+        [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
+        # Pull in existing static configuration
+        . /etc/sysconfig/network/ifcfg-${netif}
+
+        # loop over all configurations in ifcfg-$netif (IPADDR*) and apply
+        for conf in ${!IPADDR@}; do
+            ip=${!conf}
+            [ -z "$ip" ] && continue
+            ext=${conf#IPADDR}
+            concat="PREFIXLEN$ext" && [ -n "${!concat}" ] && mtu=${!concat}
+            concat="MTU$ext" && [ -n "${!concat}" ] && mtu=${!concat}
+            concat="REMOTE_IPADDR$ext" && [ -n "${!concat}" ] && server=${!concat}
+            concat="GATEWAY$ext" && [ -n "${!concat}" ] && gw=${!concat}
+            concat="BOOTPROTO$ext" && [ -n "${!concat}" ] && autoconf=${!concat}
+            do_static_setup
+        done
+    else
+        do_static_setup
+    fi
+
+    return 0
+}
+
+do_static_setup() {
     strglobin $ip '*:*:*' && load_ipv6
 
     linkup $netif
@@ -237,7 +272,6 @@ do_static() {
     else
         # Assume /24 prefix for IPv4
         [ -z "$prefix" ] && prefix=24
-        ip addr flush dev $netif
         ip addr add $ip/$prefix ${srv:+peer $srv} brd + dev $netif
     fi
 
@@ -256,8 +290,6 @@ do_static() {
     done
 
     [ -n "$hostname" ] && echo "echo $hostname > /proc/sys/kernel/hostname" > /tmp/net.$netif.hostname
-
-    return 0
 }
 
 # loopback is always handled the same way
@@ -404,6 +436,14 @@ for p in $(getargs ip=); do
     ip_to_var $p
     # skip ibft
     [ "$autoconf" = "ibft" ] && continue
+    
+    # skip if same configuration appears twice
+    while read line
+    do
+      [ "$line" = "$p" ] && continue 2
+    done < /tmp/net.${netif}.conf
+
+    echo $p >> /tmp/net.${netif}.conf
 
     case "$dev" in
         ??:??:??:??:??:??)  # MAC address
@@ -421,28 +461,11 @@ for p in $(getargs ip=); do
     [ "$use_bridge" != 'true' ] && \
     [ "$use_vlan" != 'true' ] && continue
 
-    if [ "$autoconf" = "static" ] &&
-        [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
-        # Pull in existing static configuration
-        . /etc/sysconfig/network/ifcfg-${netif}
-        ip=${IPADDR}
-        prefix=${PREFIXLEN}
-        mtu=${MTU}
-        server=${REMOTE_IPADDR}
-        gw=${GATEWAY}
-        autoconf=${BOOTPROTO}
-    fi
-
     # setup nameserver
     namesrv="$dns1 $dns2 $(getargs nameserver)"
     for s in $namesrv; do
         echo nameserver $s >> /tmp/net.$netif.resolv.conf
     done
-
-    # Store config for later use
-    for i in ip srv gw mask prefix hostname macaddr dns1 dns2; do
-        eval '[ "$'$i'" ] && echo '$i'="$'$i'"'
-    done > /tmp/net.$netif.override
 
     case $autoconf in
         dhcp4|dhcp|on|any)
@@ -466,7 +489,6 @@ for p in $(getargs ip=); do
         fi
     fi
 
-    exit 0
 done
 
 # netif isn't the top stack? Then we should exit here.
@@ -486,4 +508,9 @@ if [ ! -e /tmp/net.${netif}.up ]; then
     fi
 fi
 
+if [ -e /tmp/net.${netif}.up ]; then
+    > /tmp/net.$netif.did-setup
+    [ -e /sys/class/net/$netif/address ] && \
+        > /tmp/net.$(cat /sys/class/net/$netif/address).did-setup
+fi
 exit 0

@@ -6,5 +6,7 @@ command -v getarg >/dev/null          || . /lib/dracut-lib.sh
 command -v ibft_to_cmdline >/dev/null || . /lib/net-lib.sh
 
 # If ibft is requested, read ibft vals and write ip=XXX cmdline args
-[ "ibft" = "$(getarg ip=)" ] && ibft_to_cmdline
+for i in $(getargs ip=); do
+    [ "ibft" = "$i" ] && ibft_to_cmdline && break
+done
 
