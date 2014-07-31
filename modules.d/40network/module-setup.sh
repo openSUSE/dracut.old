@@ -103,6 +103,8 @@ install() {
 
     [[ $hostonly ]] && {
         inst_multiple /etc/sysconfig/network/ifcfg-*
+        inst_multiple /etc/sysconfig/network/ifroute-*
+        inst_simple /etc/sysconfig/network/routes
     }
 
     inst_libdir_file {"tls/$_arch/",tls/,"$_arch/",}"libnss_dns.so.*" \

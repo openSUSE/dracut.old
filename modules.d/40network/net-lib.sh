@@ -124,7 +124,6 @@ setup_net() {
     [ -e "/tmp/net.ifaces" ] && read IFACES < /tmp/net.ifaces
     [ -z "$IFACES" ] && IFACES="$netif"
     # run the scripts written by ifup
-    [ -e /tmp/net.$netif.gw ]            && . /tmp/net.$netif.gw
     [ -e /tmp/net.$netif.hostname ]      && . /tmp/net.$netif.hostname
     [ -e /tmp/net.$netif.override ]      && . /tmp/net.$netif.override
     [ -e /tmp/dhclient.$netif.dhcpopts ] && . /tmp/dhclient.$netif.dhcpopts
@@ -137,6 +136,11 @@ setup_net() {
     # Note: This assumes that if no router is present the
     # root server is on the same subnet.
 
+    if [ -e /tmp/net.$netif.gw ] ; then
+        while read line ; do
+            eval $line
+        done < /tmp/net.$netif.gw
+    fi
     # Get DHCP-provided router IP, or the cmdline-provided "gw=" argument
     [ -n "$new_routers" ] && gw_ip=${new_routers%%,*}
     [ -n "$gw" ] && gw_ip=$gw
