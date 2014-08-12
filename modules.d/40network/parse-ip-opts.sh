@@ -21,22 +21,7 @@ if [ -n "$netroot" ] && [ -z "$(getarg ip=)" ] && [ -z "$(getarg BOOTIF=)" ]; th
     return;
 fi
 
-# Count ip= lines to decide whether we need bootdev= or not
-if [ -z "$NEEDBOOTDEV" ] ; then
-    count=0
-    for p in $(getargs ip=); do
-        count=$(( $count + 1 ))
-    done
-    [ $count -gt 1 ] && NEEDBOOTDEV=1
-fi
-unset count
-
-# If needed, check if bootdev= contains anything usable
 BOOTDEV=$(getarg bootdev=)
-
-if [ -n "$NEEDBOOTDEV" ] ; then
-    [ -z "$BOOTDEV" ] && warn "Please supply bootdev argument for multiple ip= lines"
-fi
 
 # Check ip= lines
 # XXX Would be nice if we could errorcheck ip addresses here as well
@@ -46,14 +31,14 @@ for p in $(getargs ip=); do
     # make first device specified the BOOTDEV
     if [ -z "$BOOTDEV" ] && [ -n "$dev" ]; then
         BOOTDEV="$dev"
-        [ -n "$NEEDBOOTDEV" ] && warn "Setting bootdev to '$BOOTDEV'"
+        warn "Setting bootdev to '$BOOTDEV'"
     fi
 
     # skip ibft since we did it above
     [ "$autoconf" = "ibft" ] && continue
 
     # We need to have an ip= line for the specified bootdev
-    [ -n "$NEEDBOOTDEV" ] && [ "$dev" = "$BOOTDEV" ] && BOOTDEVOK=1
+    [ "$dev" = "$BOOTDEV" ] && BOOTDEVOK=1
 
     # Empty autoconf defaults to 'dhcp'
     if [ -z "$autoconf" ] ; then
