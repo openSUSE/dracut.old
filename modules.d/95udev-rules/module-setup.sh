@@ -34,7 +34,6 @@ install() {
         60-pcmcia.rules \
         50-udev.rules 95-late.rules \
         50-firmware.rules \
-        70-persistent-net.rules \
         59-scsi-sg3_utils.rules \
         75-net-description.rules \
         80-net-name-slot.rules 80-net-setup-link.rules \
