@@ -61,9 +61,7 @@ do_rhevh_check()
     kpath=${1}
 
     # If we're on RHEV-H, the kernel is in /run/initramfs/live/vmlinuz0
-    HMAC_SUM_ORIG=$(cat $NEWROOT/boot/.vmlinuz-${KERNEL}.hmac | while read a b; do printf "%s\n" $a; done)
-    HMAC_SUM_CALC=$(sha512hmac $kpath | while read a b; do printf "%s\n" $a; done || return 1)
-    if [ -z "$HMAC_SUM_ORIG" ] || [ -z "$HMAC_SUM_CALC" ] || [ "${HMAC_SUM_ORIG}" != "${HMAC_SUM_CALC}" ]; then
+    if fipscheck $NEWROOT/boot/vmlinuz-${KERNEL} ; then
         warn "HMAC sum mismatch"
         return 1
     fi
@@ -128,7 +126,7 @@ do_fips()
     elif [ -e "/run/initramfs/live/isolinux/vmlinuz0" ]; then
         do_rhevh_check /run/initramfs/live/isolinux/vmlinuz0 || return 1
     else
-        sha512hmac -c "/boot/.vmlinuz-${KERNEL}.hmac" || return 1
+        fipscheck "/boot/vmlinuz-${KERNEL}" || return 1
     fi
 
     info "All initrd crypto checks done"
