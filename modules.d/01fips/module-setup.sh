@@ -23,7 +23,7 @@ installkernel() {
     _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
     _fipsmodules+="ghash-clmulni-intel "
 
-    _fipsmodules+="drbg "
+    _fipsmodules+="drbg"
 
     mkdir -m 0755 -p "${initdir}/etc/modprobe.d"
 
@@ -42,15 +42,16 @@ install() {
     inst_hook pre-pivot 01 "$moddir/fips-noboot.sh"
     inst_script "$moddir/fips.sh" /sbin/fips.sh
 
-    inst_multiple sha512hmac rmmod insmod mount uname umount fipscheck
+    inst_multiple rmmod insmod mount uname umount fipscheck strace
 
-    inst_libdir_file libsoftokn3.so libsoftokn3.so \
-        libsoftokn3.chk libfreebl3.so libfreebl3.chk \
-        libssl.so 'hmaccalc/sha512hmac.hmac' libssl.so.10 \
+    inst_libdir_file \
+        fipscheck .fipscheck.hmac \
+         libfipscheck.so.1 \
+        .libfipscheck.so.1.hmac .libfipscheck.so.1.1.0.hmac \
+         libcrypto.so.1.0.0       libssl.so.1.0.0 \
         .libcrypto.so.1.0.0.hmac .libssl.so.1.0.0.hmac \
         .libcryptsetup.so.4.5.0.hmac .libcryptsetup.so.4.hmac \
         .libgcrypt.so.20.hmac \
-        .libfipscheck.so.1.hmac .libfipscheck.so.1.1.0.hmac
 
     # we do not use prelink at SUSE
     #inst_multiple -o prelink
