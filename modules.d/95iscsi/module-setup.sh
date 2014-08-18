@@ -76,6 +76,7 @@ install_iscsiroot() {
         esac
     done
 
+    [ -z "$iscsi_address" ] && return
     local_address=$(ip -o route get to $iscsi_address | sed -n 's/.*src \([0-9a-f.:]*\).*/\1/p')
     ifname=$(ip -o route get to $iscsi_address | sed -n 's/.*dev \([^ ]*\).*/\1/p')
     printf 'ip=%s:static ' ${ifname}
