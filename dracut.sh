@@ -221,6 +221,16 @@ push() {
     done
 }
 
+# Fills up host_devs stack variable and makes sure there are no duplicates
+push_host_devs() {
+    local _dev
+    for _dev in ${host_devs[@]}; do
+        [ "$_dev" = "$1" ] && return
+    done
+    push host_devs "$1"
+}
+
+
 # function pop()
 # pops the last value from a stack
 # assigns value to second argument variable
@@ -1007,25 +1017,25 @@ declare -A host_fs_types
 for line in "${fstab_lines[@]}"; do
     set -- $line
     #dev mp fs fsopts
-    push host_devs "$1"
+    push_host_devs "$1"
     host_fs_types["$1"]="$3"
 done
 
 for f in $add_fstab; do
     [[ -e $f ]] || continue
     while read dev rest; do
-        push host_devs "$dev"
+        push_host_devs "$dev"
     done < "$f"
 done
 
 for dev in $add_device; do
-    push host_devs "$dev"
+    push_host_devs "$dev"
 done
 
 if (( ${#add_device_l[@]} )); then
     while pop add_device_l val; do
         add_device+=" $val "
-        push host_devs "$val"
+        push_host_devs "$val"
     done
 fi
 
@@ -1054,9 +1064,9 @@ if [[ $hostonly ]]; then
         _dev=$(find_block_device "$mp")
         _bdev=$(readlink -f "/dev/block/$_dev")
         [[ -b $_bdev ]] && _dev=$_bdev
-        push host_devs $_dev
+        push_host_devs $_dev
         [[ "$mp" == "/" ]] && root_dev="$_dev"
-        push host_devs "$_dev"
+        push_host_devs "$_dev"
     done
 
     if [[ $nowaitforswap != yes ]] && [[ -f /proc/swaps ]] && [[ -f /etc/fstab ]]; then
@@ -1085,7 +1095,7 @@ if [[ $hostonly ]]; then
                     done < /etc/crypttab
                 fi
 
-                push host_devs "$(readlink -f "$dev")"
+                push_host_devs "$(readlink -f "$dev")"
                 break
             done < /etc/fstab
         done < /proc/swaps
@@ -1150,7 +1160,7 @@ for dev in "${!host_fs_types[@]}"; do
     fi
     if [[ $journaldev ]]; then
         dev="$(readlink -f "$dev")"
-        push host_devs "$dev"
+        push_host_devs "$dev"
         _get_fs_type "$dev"
         check_block_and_slaves_all _get_fs_type "$(get_maj_min "$dev")"
     fi
