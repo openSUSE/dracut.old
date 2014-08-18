@@ -803,6 +803,12 @@ stdloglvl=$((stdloglvl + verbosity_mod_l))
 # eliminate IFS hackery when messing with fw_dir
 fw_dir=${fw_dir//:/ }
 
+if [[ ! -f $logfile ]];then
+    if [[ ! `touch $logfile > /dev/null 2>&1` ]];then
+        printf "%s\n" "dracut: touch $logfile failed. Couldn't create logfile."
+    fi
+fi
+
 # handle compression options.
 [[ $compress ]] || compress="gzip"
 case $compress in
