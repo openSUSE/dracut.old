@@ -65,6 +65,7 @@ install() {
         inst_hook cleanup 30 "$moddir/crypt-cleanup.sh"
     fi
 
+    > /tmp/dracut_block_uuid.map
     if [[ $hostonly ]] && [[ -f /etc/crypttab ]]; then
         # filter /etc/crypttab for the devices we need
         while read _mapper _dev _rest; do
@@ -73,6 +74,8 @@ install() {
 
             [[ $_dev == UUID=* ]] && \
                 _dev="/dev/disk/by-uuid/${_dev#UUID=}"
+
+            echo "$_dev $(blkid $_dev -s UUID -o value)" >> /tmp/dracut_block_uuid.map
 
             for _hdev in "${!host_fs_types[@]}"; do
                 [[ ${host_fs_types[$_hdev]} == "crypto_LUKS" ]] || continue
@@ -85,6 +88,7 @@ install() {
     fi
 
     inst_simple "$moddir/crypt-lib.sh" "/lib/dracut-crypt-lib.sh"
+    inst_simple "/tmp/dracut_block_uuid.map" "/usr/lib/dracut/modules.d/90crypt/block_uuid.map"
 
     inst_multiple -o \
         $systemdutildir/system-generators/systemd-cryptsetup-generator \

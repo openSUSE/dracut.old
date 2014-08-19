@@ -7,11 +7,20 @@ command -v getarg >/dev/null || . /lib/dracut-lib.sh
 # check if the crypttab contains an entry for a LUKS UUID
 crypttab_contains() {
     local luks="$1"
+    local _uuid _line
     local l d rest
     if [ -f /etc/crypttab ]; then
         while read l d rest; do
             strstr "${l##luks-}" "${luks##luks-}" && return 0
             strstr "$d" "${luks##luks-}" && return 0
+            if [ -e /usr/lib/dracut/modules.d/90crypt/block_uuid.map ]; then
+                # search for line starting with $d
+                _line=$(sed -n "\,^$d .*$,{p}" /usr/lib/dracut/modules.d/90crypt/block_uuid.map)
+                [ -z "$_line" ] && continue
+                # get second column with uuid
+                _uuid="$(echo $_line | sed 's,^.* \(.*$\),\1,')"
+	        strstr "$_uuid" "${luks##luks-}" && return 0
+            fi
         done < /etc/crypttab
     fi
     return 1
