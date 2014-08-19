@@ -103,7 +103,7 @@ install() {
 
     [[ $hostonly ]] && {
         inst_multiple /etc/sysconfig/network/ifcfg-*
-        inst_multiple /etc/sysconfig/network/ifroute-*
+        inst_multiple -o /etc/sysconfig/network/ifroute-*
         inst_simple /etc/sysconfig/network/routes
     }
 
