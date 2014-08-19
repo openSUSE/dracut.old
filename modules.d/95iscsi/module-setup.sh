@@ -93,6 +93,12 @@ install_iscsiroot() {
         if [ -n "$iscsi_lun" -a "$iscsi_lun" -eq 0 ] ; then
             iscsi_lun=
         fi
+        # In IPv6 case rd.iscsi.initatior= must pass address in [] brackets
+        case "$iscsi_address" in
+            *:*)
+                iscsi_address="[$iscsi_address]"
+                ;;
+        esac
         echo "rd.iscsi.initiator=${iscsi_initiator} netroot=iscsi:${iscsi_address}::${iscsi_port}:${iscsi_lun}:${iscsi_targetname}"
     fi
     return 0
@@ -111,7 +117,7 @@ install_softiscsi() {
         install_iscsiroot $iscsi_dev
     }
 
-    for_each_host_dev_and_slaves is_softiscsi || return 255
+    for_each_host_dev_and_slaves_all is_softiscsi || return 255
     return 0
 }
 
@@ -194,11 +200,13 @@ installkernel() {
 # called by dracut
 cmdline() {
     local _iscsiconf=$(install_ibft)
-    if [ "$_iscsiconf" ] ; then
-        echo ${_iscsiconf}
-    else
-        install_softiscsi
-    fi
+    {
+        if [ "$_iscsiconf" ] ; then
+            echo ${_iscsiconf}
+        else
+            install_softiscsi
+        fi
+    } | sort | uniq
 }
 
 # called by dracut
