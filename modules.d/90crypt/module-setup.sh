@@ -65,6 +65,8 @@ install() {
         inst_hook cleanup 30 "$moddir/crypt-cleanup.sh"
     fi
 
+    # Have to use exit here, return value gets ignored in dracut.sh...
+    uuid_map_file=$(mktemp /tmp/dracut.XXXXXXXXXX) || exit 1
     if [[ $hostonly ]] && [[ -f /etc/crypttab ]]; then
         # filter /etc/crypttab for the devices we need
         while read _mapper _dev _rest; do
@@ -73,6 +75,8 @@ install() {
 
             [[ $_dev == UUID=* ]] && \
                 _dev="/dev/disk/by-uuid/${_dev#UUID=}"
+
+            echo "$_dev $(blkid $_dev -s UUID -o value)" >> $uuid_map_file
 
             for _hdev in "${!host_fs_types[@]}"; do
                 [[ ${host_fs_types[$_hdev]} == "crypto_LUKS" ]] || continue
@@ -85,6 +89,8 @@ install() {
     fi
 
     inst_simple "$moddir/crypt-lib.sh" "/lib/dracut-crypt-lib.sh"
+    inst_simple $uuid_map_file "/usr/lib/dracut/modules.d/90crypt/block_uuid.map"
+    rm -f $uuid_map_file
 
     inst_multiple -o \
         $systemdutildir/system-generators/systemd-cryptsetup-generator \
