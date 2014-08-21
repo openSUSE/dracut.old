@@ -178,11 +178,13 @@ do_dhcp() {
 
     info "Preparation for DHCP transaction"
 
+    [ -d /var/lib/wicked ] || mkdir -p /var/lib/wicked
+
     local dhclient=''
-    if [ "$1" = "-4" ] ; then
-        dhclient="wickedd-dhcp4"
-    elif [ "$1" = "-6" ] ; then
+    if [ "$1" = "-6" ] ; then
         dhclient="wickedd-dhcp6"
+    else
+        dhclient="wickedd-dhcp4"
     fi
 
     if ! iface_has_link $netif; then
@@ -226,33 +228,49 @@ do_ipv6auto() {
     return 0
 }
 
-# Handle static ip configuration
-do_static() {
+# Handle ip configuration via ifcfg files
+do_ifcfg() {
     if [ "$autoconf" = "static" ] &&
         [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
         # Pull in existing static configuration
         . /etc/sysconfig/network/ifcfg-${netif}
 
+        # The first configuration can be anything
+        [ -n "$PREFIXLEN" ] && prefix=${PREFIXLEN}
+        [ -n "$MTU" ] && mtu=${MTU}
+        [ -n "$REMOTE_IPADDR" ] && server=${REMOTE_IPADDR}
+        [ -n "$GATEWAY" ] && gw=${GATEWAY}
+        [ -n "$BOOTPROTO" ] && autoconf=${BOOTPROTO}
+        case "$autoconf" in
+            dhcp6)
+                load_ipv6
+                do_dhcp -6 ;;
+            dhcp*)
+                do_dhcp -4 ;;
+            *)
+                do_static ;;
+        esac
         # loop over all configurations in ifcfg-$netif (IPADDR*) and apply
         for conf in ${!IPADDR@}; do
             ip=${!conf}
             [ -z "$ip" ] && continue
             ext=${conf#IPADDR}
-            concat="PREFIXLEN$ext" && [ -n "${!concat}" ] && mtu=${!concat}
+            concat="PREFIXLEN$ext" && [ -n "${!concat}" ] && prefix=${!concat}
             concat="MTU$ext" && [ -n "${!concat}" ] && mtu=${!concat}
             concat="REMOTE_IPADDR$ext" && [ -n "${!concat}" ] && server=${!concat}
             concat="GATEWAY$ext" && [ -n "${!concat}" ] && gw=${!concat}
-            concat="BOOTPROTO$ext" && [ -n "${!concat}" ] && autoconf=${!concat}
-            do_static_setup
+            # Additional configurations must be static
+            do_static
         done
     else
-        do_static_setup
+        do_static
     fi
 
     return 0
 }
 
-do_static_setup() {
+# Handle static ip configuration
+do_static() {
     strglobin $ip '*:*:*' && load_ipv6
 
     linkup $netif
@@ -475,6 +493,8 @@ for p in $(getargs ip=); do
             do_dhcp -6 ;;
         auto6)
             do_ipv6auto ;;
+        static)
+            do_ifcfg ;;
         *)
             do_static ;;
     esac
