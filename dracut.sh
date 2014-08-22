@@ -813,9 +813,13 @@ stdloglvl=$((stdloglvl + verbosity_mod_l))
 # eliminate IFS hackery when messing with fw_dir
 fw_dir=${fw_dir//:/ }
 
-if [[ ! -f $logfile ]];then
-    if [[ ! `touch $logfile > /dev/null 2>&1` ]];then
-        printf "%s\n" "dracut: touch $logfile failed. Couldn't create logfile."
+# check for logfile and try to create one if it doesn't exist
+if [[ -n "$logfile" ]];then
+    if [[ ! -f "$logfile" ]];then
+        touch "$logfile"
+        if [ ! $? -eq 0 ] ;then
+            printf "%s\n" "dracut: touch $logfile failed." >&2
+        fi
     fi
 fi
 
