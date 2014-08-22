@@ -1020,9 +1020,28 @@ declare -A host_fs_types
 
 for line in "${fstab_lines[@]}"; do
     set -- $line
+    dev="$1"
     #dev mp fs fsopts
-    push_host_devs "$1"
-    host_fs_types["$1"]="$3"
+    case "$dev" in
+        UUID=*)
+            dev=/dev/disk/by-uuid/${dev#UUID=*}
+            ;;
+        LABEL=*)
+            dwarn "Not supported fstab line: $@"
+            ;;
+        PARTUUID=*)
+            dwarn "Not supported fstab line: $@"
+            ;;
+        PARTLABEL=*)
+            dwarn "Not supported fstab line: $@"
+            ;;
+        *)
+            dwarn "Not supported fstab line: $@"
+            ;;
+    esac
+    push_host_devs "$dev"
+    echo "$dev" "$3"
+    host_fs_types["$dev"]="$3"
 done
 
 for f in $add_fstab; do
