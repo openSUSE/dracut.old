@@ -1024,19 +1024,16 @@ for line in "${fstab_lines[@]}"; do
     #dev mp fs fsopts
     case "$dev" in
         UUID=*)
-            dev=/dev/disk/by-uuid/${dev#UUID=*}
+            dev=$(blkid -l -t PARTLABEL="$dev" -o device)
             ;;
         LABEL=*)
-            dwarn "Not supported fstab line: $@"
+            dev=$(blkid -l -t LABEL="$dev" -o device)
             ;;
         PARTUUID=*)
-            dwarn "Not supported fstab line: $@"
+            dev=$(blkid -l -t PARTUUID="$dev" -o device)
             ;;
         PARTLABEL=*)
-            dwarn "Not supported fstab line: $@"
-            ;;
-        *)
-            dwarn "Not supported fstab line: $@"
+            dev=$(blkid -l -t PARTLABEL="$dev" -o device)
             ;;
     esac
     push_host_devs "$dev"
