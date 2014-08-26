@@ -1024,20 +1024,20 @@ for line in "${fstab_lines[@]}"; do
     #dev mp fs fsopts
     case "$dev" in
         UUID=*)
-            dev=$(blkid -l -t PARTLABEL="$dev" -o device)
+            dev=$(blkid -l -t UUID=${dev#UUID=} -o device)
             ;;
         LABEL=*)
-            dev=$(blkid -l -t LABEL="$dev" -o device)
+            dev=$(blkid -l -t LABEL=${dev#LABEL=} -o device)
             ;;
         PARTUUID=*)
-            dev=$(blkid -l -t PARTUUID="$dev" -o device)
+            dev=$(blkid -l -t PARTUUID=${dev#PARTUUID=} -o device)
             ;;
         PARTLABEL=*)
-            dev=$(blkid -l -t PARTLABEL="$dev" -o device)
+            dev=$(blkid -l -t PARTLABEL=${dev#PARTLABEL=} -o device)
             ;;
     esac
+    [ -z "$dev" ] && dwarn "Bad fstab entry $@" && continue
     push_host_devs "$dev"
-    echo "$dev" "$3"
     host_fs_types["$dev"]="$3"
 done
 
