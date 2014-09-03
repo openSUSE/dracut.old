@@ -4,10 +4,6 @@
 
 # called by dracut
 check() {
-    local _arch=$(uname -m)
-    # No suspend support on s390(x)
-    [ "$_arch" = "s390" -o "$_arch" = "s390x" ] && return 1
-
     # No point trying to support resume, if no swap partition exist
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         for fs in "${host_fs_types[@]}"; do
