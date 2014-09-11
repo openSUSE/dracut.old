@@ -767,6 +767,18 @@ if [[ -n "$logfile" ]];then
     fi
 fi
 
+# parse SUSE kernel module dependencies
+# Kernel modules using "load_module" function may not show up in modprobe
+# depencies. While this is the case there is a workaround in SUSE which adds:
+# # SUSE_INITRD: module_name REQUIRES module1 module2 ...
+# to /etc/modprobe.d/*.conf
+declare -A suse_mod_deps
+while read -r line; do
+    _suse_mod="${line##*SUSE INITRD: }"
+    _suse_mod="${_suse_mod%% REQUIRES*}"
+    suse_mod_deps["$_suse_mod"]="${suse_mod_deps["$_suse_mod"]} ${line##*REQUIRES }"
+done <<< "$(grep -h "^# SUSE INITRD: " /etc/modprobe.d/[0-9][0-9]*.conf)"
+
 # handle compression options.
 if [[ $_no_compress_l = "cat" ]]; then
     compress="cat"
