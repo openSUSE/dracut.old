@@ -1121,6 +1121,7 @@ if [[ $hostonly ]]; then
         "/usr/lib64" \
         "/boot" \
         "/boot/efi" \
+        "/boot/zipl" \
         ;
     do
         mp=$(readlink -f "$mp")
