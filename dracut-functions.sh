@@ -1706,8 +1706,12 @@ instmods() {
                         --set-version $kernel ${_moddirname} $_mpargs
                     ((_ret+=$?))
                 else
-                    [[ $DRACUT_KERNEL_LAZY_HASHDIR ]] && \
+                    if [[ $DRACUT_KERNEL_LAZY_HASHDIR ]] && [ -n "$_mod" ]; then
                         echo $_mod >> "$DRACUT_KERNEL_LAZY_HASHDIR/lazylist"
+                        for suse_mod_dep in ${suse_mod_deps["$_mod"]}; do
+                            echo $suse_mod_dep >> "$DRACUT_KERNEL_LAZY_HASHDIR/lazylist"
+                        done
+                    fi
                 fi
                 ;;
         esac
