@@ -70,7 +70,7 @@ installkernel() {
         =drivers/net/phy \
         =drivers/net/team \
         =drivers/net/ethernet \
-        ecb arc4 bridge stp llc ipv6 bonding 8021q af_packet virtio_net
+        ecb arc4 bridge stp llc ipv6 bonding 8021q af_packet virtio_net xennet
 }
 
 # called by dracut
