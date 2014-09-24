@@ -182,9 +182,15 @@ do_dhcp() {
 
     local dhclient=''
     if [ "$1" = "-6" ] ; then
-        dhclient="wickedd-dhcp6"
+        local ipv6_mode=''
+        if [ -f /tmp/net.$netif.auto6 ] ; then
+            ipv6_mode="auto"
+        else
+            ipv6_mode="managed"
+        fi
+        dhclient="wickedd-dhcp6 --test --test-mode $ipv6_mode"
     else
-        dhclient="wickedd-dhcp4"
+        dhclient="wickedd-dhcp4 --test"
     fi
 
     if ! iface_has_link $netif; then
@@ -198,10 +204,14 @@ do_dhcp() {
     fi
 
     echo "Starting dhcp for interface $netif"
-    $dhclient --test $netif > /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
+    $dhclient --test-format leaseinfo --test-output /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} --test-request - $netif << EOF
+<request type="lease"/>
+EOF
     dhcp_apply $1 || return $?
+    if [ "$1" = "-6" ] ; then
+        wait_for_ipv6_dad $netif
+    fi
 
-    echo $netif > /tmp/setup_net_${netif}.ok
     return 0
 }
 
@@ -220,6 +230,7 @@ do_ipv6auto() {
     echo 0 > /proc/sys/net/ipv6/conf/$netif/forwarding
     echo 1 > /proc/sys/net/ipv6/conf/$netif/accept_ra
     echo 1 > /proc/sys/net/ipv6/conf/$netif/accept_redirects
+    echo 1 > /proc/sys/net/ipv6/conf/$netif/autoconf
     linkup $netif
     wait_for_ipv6_auto $netif
 
@@ -492,6 +503,7 @@ for p in $(getargs ip=); do
             load_ipv6
             do_dhcp -6 ;;
         auto6)
+            echo $netif > /tmp/net.$netif.auto6
             do_ipv6auto ;;
         static)
             do_ifcfg ;;
