@@ -219,6 +219,10 @@ install() {
             print_vars KEYMAP EXT_KEYMAPS UNICODE FONT FONT_MAP FONT_UNIMAP >> ${initdir}${VCONFIG_CONF}
         fi
 
+        if dracut_module_included "systemd" && [[ -f /etc/sysconfig/console ]]; then
+            inst_simple /etc/sysconfig/console
+        fi
+
         return 0
     }
 
