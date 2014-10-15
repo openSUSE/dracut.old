@@ -823,11 +823,11 @@ if ! [[ $outfile ]]; then
         outfile="$dracutsysrootdir$efidir/Linux/linux-$kernel${MACHINE_ID:+-${MACHINE_ID}}${BUILD_ID:+-${BUILD_ID}}.efi"
     else
         if [[ -e "$dracutsysrootdir/boot/initrd-$kernel" ]]; then
-            outfile="/boot/initrd-$kernel.img"
+            outfile="/boot/initrd-$kernel"
         elif [[ $MACHINE_ID ]] && ( [[ -d $dracutsysrootdir/boot/${MACHINE_ID} ]] || [[ -L $dracutsysrootdir/boot/${MACHINE_ID} ]] ); then
             outfile="$dracutsysrootdir/boot/${MACHINE_ID}/$kernel/initrd"
         else
-            outfile="$dracutsysrootdir/boot/initrd-$kernel.img"
+            outfile="$dracutsysrootdir/boot/initrd-$kernel"
         fi
     fi
 fi
