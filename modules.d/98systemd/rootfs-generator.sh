@@ -112,7 +112,8 @@ esac
 if [ "${root%%:*}" = "block" ]; then
    generator_wait_for_dev "${root#block:}" "$RDRETRY"
    generator_fsck_after_pre_mount "${root#block:}"
-   grep -q 'root=' /proc/cmdline || generator_mount_rootfs "${root#block:}" "$(getarg rootfstype=)" "$(getarg rootflags=)"
+   cmdline=$(</proc/cmdline)
+   test "$cmdline" = "${cmdline#*root=}" && generator_mount_rootfs "${root#block:}" "$(getarg rootfstype=)" "$(getarg rootflags=)"
 fi
 
 exit 0
