@@ -1642,14 +1642,10 @@ instmods() {
     [[ $no_kernel = yes ]] && return
     # called [sub]functions inherit _fderr
     local _fderr=9
-    local _check=no
+    local _check=yes
     local _silent=no
-    if [[ $1 = '-c' ]]; then
-        _check=yes
-        shift
-    fi
-
     if [[ $1 = '-s' ]]; then
+        _check=no
         _silent=yes
         shift
     fi
@@ -1669,6 +1665,7 @@ instmods() {
                 # Check for aliased modules
                 _modalias=$(modinfo -k $kernel -F filename $_mod 2> /dev/null)
                 _modalias=${_modalias%.ko}
+                [[ -z "$_modalias" ]] && return 1
                 if [ "${_modalias##*/}" != "$_mod" ] ; then
                     _mod=${_modalias##*/}
                 fi
@@ -1726,6 +1723,7 @@ instmods() {
                     if [[ "$_check" == "yes" ]] && [[ "$_silent" == "no" ]]; then
                         dfatal "Failed to install module $_mod"
                     fi
+                    echo $_mod >> $tmp_dracut_failed_drivers
                 }
             done
         fi
@@ -1734,6 +1732,7 @@ instmods() {
                 if [[ "$_check" == "yes" ]] && [[ "$_silent" == "no" ]]; then
                     dfatal "Failed to install module $1"
                 fi
+                echo $1 >> $tmp_dracut_failed_drivers
             }
             shift
         done
