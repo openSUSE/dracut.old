@@ -17,7 +17,7 @@ installkernel() {
     local _fipsmodules _mod
     _fipsmodules="aead aes_generic aes-x86_64 ansi_cprng arc4 blowfish camellia cast6 cbc ccm "
     _fipsmodules+="chainiv crc32c crct10dif_generic cryptomgr crypto_null ctr cts deflate des des3_ede dm-crypt dm-mod "
-    _fipsmodules+="ecb eseqiv fcrypt gcm ghash_generic hmac khazad lzo md4 md5 michael_mic rmd128 "
+    _fipsmodules+="ecb eseqiv fcrypt gcm ghash_generic hmac khazad lzo md4 md5 michael_mic rmd128 cmac "
     _fipsmodules+="rmd160 rmd256 rmd320 salsa20 seed seqiv serpent sha1 sha224 sha256 sha256_generic "
     _fipsmodules+="sha384 sha512 sha512_generic tcrypt tea tnepres twofish wp256 wp384 wp512 xeta xtea xts zlib "
     _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
