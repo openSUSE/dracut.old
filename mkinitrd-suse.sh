@@ -211,6 +211,7 @@ while (($# > 0)); do
 	-k) # Would be nice to get a list of images here
 	    read_arg kernel_images "$@" || shift $?
 	    for kernel_image in $kernel_images;do
+		[ -L "/boot/$kernel_image" ] && kernel_image="$(readlink /boot/$kernel_image)"
 		kernels="$kernels ${kernel_image#*-}"
 	    done
 	    ;;
