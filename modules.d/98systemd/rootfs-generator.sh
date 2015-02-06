@@ -66,6 +66,23 @@ generator_mount_rootfs()
     fi
 }
 
+generator_fsck_after_pre_mount()
+{
+    local _name
+
+    [ -z "$1" ] && return 0
+
+    _name=$(dev_unit_name "$1")
+    [ -d /run/systemd/generator/systemd-fsck@${_name}.service.d ] || mkdir -p /run/systemd/generator/systemd-fsck@${_name}.service.d
+    if ! [ -f /run/systemd/generator/systemd-fsck@${_name}.service.d/after-pre-mount.conf ]; then
+        {
+            echo "[Unit]"
+            echo "After=dracut-pre-mount.service"
+        } > /run/systemd/generator/systemd-fsck@${_name}.service.d/after-pre-mount.conf
+    fi
+
+}
+
 root=$(getarg root=)
 case "$root" in
     block:LABEL=*|LABEL=*)
@@ -94,6 +111,7 @@ esac
 
 if [ "${root%%:*}" = "block" ]; then
    generator_wait_for_dev "${root#block:}" "$RDRETRY"
+   generator_fsck_after_pre_mount "${root#block:}"
    grep -q 'root=' /proc/cmdline || generator_mount_rootfs "${root#block:}" "$(getarg rootfstype=)" "$(getarg rootflags=)"
 fi
 
