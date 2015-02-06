@@ -21,7 +21,7 @@ installkernel() {
     _fipsmodules+="rmd160 rmd256 rmd320 salsa20 seed seqiv serpent sha1 sha224 sha256 sha256_generic "
     _fipsmodules+="sha384 sha512 sha512_generic tcrypt tea tnepres twofish wp256 wp384 wp512 xeta xtea xts zlib "
     _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
-    _fipsmodules+="ghash-clmulni-intel "
+    _fipsmodules+="ghash-clmulni-intel aesni-intel "
 
     _fipsmodules+="drbg"
 
