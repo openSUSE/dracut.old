@@ -1644,6 +1644,12 @@ instmods() {
     local _fderr=9
     local _check=yes
     local _silent=no
+
+    # Leave this in for compatibility reasons.
+    if [[ $1 = '-c' ]]; then
+        _check=yes
+        shift
+    fi
     if [[ $1 = '-s' ]]; then
         _check=no
         _silent=yes
