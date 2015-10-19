@@ -43,6 +43,14 @@ if [ -e /sys/module/bnx2i ] && ! [ -e /tmp/iscsiuio-started ]; then
         > /tmp/iscsiuio-started
 fi
 
+#set value for initial login retry
+set_login_retries() {
+    local default retries
+    default=2
+    retries=$(getarg rd.iscsilogin.retries)
+    return ${retries:-$default}
+}
+
 handle_firmware()
 {
     if ! [ -e /tmp/iscsistarted-firmware ]; then
@@ -52,7 +60,7 @@ handle_firmware()
         fi
 
         for p in $(getargs rd.iscsi.param -d iscsi_param); do
-	    iscsi_param="$iscsi_param --param $p"
+            iscsi_param="$iscsi_param --param $p"
         done
 
         if ! iscsiadm -m fw -l; then
@@ -79,7 +87,7 @@ handle_netroot()
     local iscsi_username iscsi_password
     local iscsi_in_username iscsi_in_password
     local iscsi_iface_name iscsi_netdev_name
-    local iscsi_param
+    local iscsi_param param
     local p
 
     # override conf settings by command line options
@@ -102,10 +110,19 @@ handle_netroot()
     arg=$(getarg rd.iscsi.in.password -d iscsi_in_password=)
     [ -n "$arg" ] && iscsi_in_password=$arg
     for p in $(getargs rd.iscsi.param -d iscsi_param); do
-	iscsi_param="$iscsi_param --param $p"
+	iscsi_param="$iscsi_param $p"
     done
 
     parse_iscsi_root "$1" || return 1
+
+    #limit iscsistart login retries
+    if [[ ! "$iscsi_param" =~ "node.session.initial_login_retry_max" ]]; then
+        set_login_retries
+        retries=$?
+        if [ $retries -gt 0 ]; then
+            iscsi_param="${iscsi_param% } node.session.initial_login_retry_max=$retries"
+        fi
+    fi
 
 # XXX is this needed?
     getarg ro && iscsirw=ro
@@ -188,7 +205,7 @@ handle_netroot()
             [ -n "$iscsi_password" ] && $($COMMAND --name=node.session.auth.password --value=$iscsi_password)
             [ -n "$iscsi_in_username" ] && $($COMMAND --name=node.session.auth.username_in --value=$iscsi_in_username)
             [ -n "$iscsi_in_password" ] && $($COMMAND --name=node.session.auth.password_in --value=$iscsi_in_password)
-            [ -n "$iscsi_param" ] && $($COMMAND --name=${iscsi_param%=*} --value=${iscsi_param#*=})
+            [ -n "$iscsi_param" ] && for param in $iscsi_param; do $($COMMAND --name=${param%=*} --value=${param#*=}); done
         fi
     done
 
