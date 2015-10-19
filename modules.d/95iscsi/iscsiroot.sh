@@ -46,8 +46,8 @@ fi
 handle_firmware()
 {
     if ! [ -e /tmp/iscsistarted-firmware ]; then
-        if ! iscsistart -f; then
-            warn "iscistart: Could not get list of targets from firmware."
+        if ! iscsiadm -m fw; then
+            warn "iscsiadm: Could not get list of targets from firmware."
             return 1
         fi
 
@@ -55,8 +55,8 @@ handle_firmware()
 	    iscsi_param="$iscsi_param --param $p"
         done
 
-        if ! iscsistart -b $iscsi_param; then
-            warn "'iscsistart -b $iscsi_param' failed"
+        if ! iscsiadm -m fw -l; then
+            warn "iscsiadm: Log-in to iscsi target failed"
         fi
 
         if [ -d /sys/class/iscsi_session ]; then
@@ -85,7 +85,7 @@ handle_netroot()
     # override conf settings by command line options
     arg=$(getarg rd.iscsi.initiator -d iscsi_initiator=)
     [ -n "$arg" ] && iscsi_initiator=$arg
-    arg=$(getarg rd.iscsi.target.name -d iscsi_target_name=)
+    arg=$(getargs rd.iscsi.target.name -d iscsi_target_name=)
     [ -n "$arg" ] && iscsi_target_name=$arg
     arg=$(getarg rd.iscsi.target.ip -d iscsi_target_ip)
     [ -n "$arg" ] && iscsi_target_ip=$arg
@@ -166,17 +166,33 @@ handle_netroot()
     # force udevsettle to break
     > $hookdir/initqueue/work
 
-    iscsistart -i $iscsi_initiator -t $iscsi_target_name        \
-        -g $iscsi_target_group -a $iscsi_target_ip      \
-        -p $iscsi_target_port \
-        ${iscsi_username:+-u $iscsi_username} \
-        ${iscsi_password:+-w $iscsi_password} \
-        ${iscsi_in_username:+-U $iscsi_in_username} \
-        ${iscsi_in_password:+-W $iscsi_in_password} \
-	${iscsi_iface_name:+--param iface.iscsi_ifacename=$iscsi_iface_name} \
-	${iscsi_netdev_name:+--param iface.net_ifacename=$iscsi_netdev_name} \
-        ${iscsi_param} \
-	|| :
+    if iscsiadm -m node; then
+        targets=$(iscsiadm -m node | sed 's/^.*iqn/iqn/')
+    else
+        targets=$(iscsiadm -m discovery -t st -p $iscsi_target_ip:${iscsi_target_port:+$iscsi_target_port} | sed 's/^.*iqn/iqn/')
+        [ -z "$targets" ] && echo "Target discovery to $iscsi_target_ip:${iscsi_target_port:+$iscsi_target_port} failed with status $?" && exit 1
+    fi
+
+    for target in $iscsi_target_name; do
+        if [[ "$targets" =~ "$target" ]]; then
+            if [ -n "$iscsi_iface_name" ]; then
+                $(iscsiadm -m iface -I $iscsi_iface_name --op=new)
+                [ -n "$iscsi_initiator" ] && $(iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.initiatorname --value=$iscsi_initiator)
+                [ -n "$iscsi_netdev_name" ] && $(iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.net_ifacename --value=$iscsi_netdev_name)
+                COMMAND="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} -I $iscsi_iface_name --op=update"
+            else
+                COMMAND="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} --op=update"
+            fi
+            $($COMMAND --name=node.startup --value=onboot)
+            [ -n "$iscsi_username" ] && $($COMMAND --name=node.session.auth.username --value=$iscsi_username)
+            [ -n "$iscsi_password" ] && $($COMMAND --name=node.session.auth.password --value=$iscsi_password)
+            [ -n "$iscsi_in_username" ] && $($COMMAND --name=node.session.auth.username_in --value=$iscsi_in_username)
+            [ -n "$iscsi_in_password" ] && $($COMMAND --name=node.session.auth.password_in --value=$iscsi_in_password)
+            [ -n "$iscsi_param" ] && $($COMMAND --name=${iscsi_param%=*} --value=${iscsi_param#*=})
+        fi
+    done
+
+    iscsiadm -m node -L onboot || :
 
     netroot_enc=$(str_replace "$1" '/' '\2f')
     echo 'started' > "/tmp/iscsistarted-iscsi:${netroot_enc}"

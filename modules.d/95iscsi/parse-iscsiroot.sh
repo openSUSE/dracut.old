@@ -92,7 +92,7 @@ if [ -n "$netroot" ] && [ "$root" != "/dev/root" ] && [ "$root" != "dhcp" ]; the
     fi
 fi
 
-if [ -n "$iscsi_firmware" ] ; then
+if [ -n "$iscsi_firmware" ] && iscsiadm -m fw; then
     echo "[ -f '/tmp/iscsistarted-firmware' ]" > $hookdir/initqueue/finished/iscsi_started.sh
 else
     netroot_enc=$(str_replace "$netroot" '/' '\2f')
