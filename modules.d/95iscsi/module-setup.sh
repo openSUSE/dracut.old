@@ -128,7 +128,7 @@ install_softiscsi() {
 check() {
     local _rootdev
     # If our prerequisites are not met, fail anyways.
-    require_binaries iscsistart hostname iscsi-iname || return 1
+    require_binaries hostname iscsi-iname iscsiadm iscsid || return 1
 
     # If hostonly was requested, fail the check if we are not actually
     # booting from root.
@@ -214,15 +214,30 @@ cmdline() {
 
 # called by dracut
 install() {
-    inst_multiple umount iscsistart hostname iscsi-iname
     inst_multiple -o iscsiuio
     inst_libdir_file 'libgcc_s.so*'
+    inst_multiple umount hostname iscsi-iname iscsiadm iscsid
+
+    ln -sf $systemdsystemunitdir/iscsid.socket $systemdsystemunitdir/sockets.target.wants/iscsid.socket
+    ln -sf $systemdsystemunitdir/iscsiuio.socket $systemdsystemunitdir/sockets.target.wants/iscsiuio.socket
+
+    inst_multiple -o \
+        $systemdsystemunitdir/iscsid.socket \
+        $systemdsystemunitdir/iscsid.service \
+        $systemdsystemunitdir/iscsiuio.service \
+        $systemdsystemunitdir/iscsiuio.socket \
+        $systemdsystemunitdir/sockets.target.wants/iscsid.socket \
+        $systemdsystemunitdir/sockets.target.wants/iscsiuio.socket
+
+    [[ -d /etc/iscsi ]] && inst_dir $(/usr/bin/find /etc/iscsi)
 
     # Detect iBFT and perform mandatory steps
     if [[ $hostonly_cmdline == "yes" ]] ; then
         local _iscsiconf=$(cmdline)
         [[ $_iscsiconf ]] && printf "%s\n" "$_iscsiconf" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
     fi
+
+    echo 'rd.neednet=1' >> "${initdir}/etc/cmdline.d/95iscsi.conf"
 
     inst_hook cmdline 90 "$moddir/parse-iscsiroot.sh"
     inst_hook cleanup 90 "$moddir/cleanup-iscsi.sh"
