@@ -70,7 +70,7 @@ install_ibft() {
 
 install_iscsiroot() {
     local devpath=$1
-    local scsi_path iscsi_lun session c d conn
+    local scsi_path iscsi_lun session c d conn host flash
     local iscsi_session iscsi_address iscsi_port iscsi_targetname iscsi_tpgt
 
     scsi_path=${devpath%%/block*}
@@ -81,6 +81,19 @@ install_iscsiroot() {
     [ "$session" = "$devpath" ] && return 1
     iscsi_session=${session##*/}
     [ "$iscsi_session" = "$session" ] && return 1
+    host=${session%%/session*}
+    [ "$host" = "$session" ] && return 1
+    iscsi_host=${host##*/}
+
+    for flash in ${host}/flashnode_sess-* ; do
+        is_boot=$(cat $flash/is_boot_target)
+        if [ $is_boot -eq 1 ] ; then
+            # qla4xxx flashnode session; skip iBFT discovery
+            iscsi_initiator=$(cat /sys/class/iscsi_host/${iscsi_host}/initiatorname)
+            echo "rd.iscsi.initiator=${iscsi_initiator}"
+            return;
+        fi
+    done
 
     for d in ${session}/* ; do
         case $d in
@@ -135,6 +148,7 @@ install_iscsiroot() {
         # can sort out rd.iscsi.initiator= duplicates
         echo "rd.iscsi.initiator=${iscsi_initiator}"
         echo "netroot=iscsi:${iscsi_address}::${iscsi_port}:${iscsi_lun}:${iscsi_targetname}"
+        echo "rd.neednet=1"
     fi
     return 0
 }
@@ -240,8 +254,6 @@ install() {
         local _iscsiconf=$(cmdline)
         [[ $_iscsiconf ]] && printf "%s\n" "$_iscsiconf" >> "${initdir}/etc/cmdline.d/95iscsi.conf"
     fi
-
-    echo 'rd.neednet=1' >> "${initdir}/etc/cmdline.d/95iscsi.conf"
 
     inst_hook cmdline 90 "$moddir/parse-iscsiroot.sh"
     inst_hook cleanup 90 "$moddir/cleanup-iscsi.sh"
