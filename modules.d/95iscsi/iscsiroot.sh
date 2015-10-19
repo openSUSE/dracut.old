@@ -41,6 +41,14 @@ if [ -z "${DRACUT_SYSTEMD}" ] && [ -e /sys/module/bnx2i ] && ! [ -e /tmp/iscsiui
         > /tmp/iscsiuio-started
 fi
 
+#set value for initial login retry
+set_login_retries() {
+    local default retries
+    default=2
+    retries=$(getarg rd.iscsilogin.retries)
+    return ${retries:-$default}
+}
+
 handle_firmware()
 {
     if ! iscsiadm -m fw; then
@@ -67,7 +75,7 @@ handle_netroot()
     local iscsi_username iscsi_password
     local iscsi_in_username iscsi_in_password
     local iscsi_iface_name iscsi_netdev_name
-    local iscsi_param
+    local iscsi_param param
     local p
 
     # override conf settings by command line options
@@ -98,6 +106,15 @@ handle_netroot()
     # Bail out early, if there is no route to the destination
     if is_ip "$iscsi_target_ip" && [ "$netif" != "timeout" ] && ! all_ifaces_setup && getargbool 1 rd.iscsi.testroute; then
         ip route get "$iscsi_target_ip" >/dev/null 2>&1 || return 0
+    fi
+
+    #limit iscsistart login retries
+    if [[ ! "$iscsi_param" =~ "node.session.initial_login_retry_max" ]]; then
+        set_login_retries
+        retries=$?
+        if [ $retries -gt 0 ]; then
+            iscsi_param="${iscsi_param% } node.session.initial_login_retry_max=$retries"
+        fi
     fi
 
 # XXX is this needed?
@@ -202,7 +219,7 @@ handle_netroot()
             [ -n "$iscsi_password" ] && $($COMMAND --name=node.session.auth.password --value=$iscsi_password)
             [ -n "$iscsi_in_username" ] && $($COMMAND --name=node.session.auth.username_in --value=$iscsi_in_username)
             [ -n "$iscsi_in_password" ] && $($COMMAND --name=node.session.auth.password_in --value=$iscsi_in_password)
-            [ -n "$iscsi_param" ] && $($COMMAND --name=${iscsi_param%=*} --value=${iscsi_param#*=}
+            [ -n "$iscsi_param" ] && for param in $iscsi_param; do $($COMMAND --name=${param%=*} --value=${param#*=}); done
         fi
     done
 
