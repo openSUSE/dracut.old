@@ -66,6 +66,7 @@ install_iscsiroot() {
             # qla4xxx flashnode session; skip iBFT discovery
             iscsi_initiator=$(cat /sys/class/iscsi_host/${iscsi_host}/initiatorname)
             echo "rd.iscsi.initiator=${iscsi_initiator}"
+            echo "rd.iscsi.firmware=1"
             return;
         fi
     done
