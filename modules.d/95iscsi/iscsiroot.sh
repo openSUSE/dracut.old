@@ -53,29 +53,34 @@ handle_firmware()
 {
     local ifaces retry
 
+    # Depending on the 'ql4xdisablesysfsboot' qla4xxx
+    # will be autostarting sessions without presenting
+    # them via the firmware interface.
+    # In these cases 'iscsiadm -m fw' will fail, but
+    # the iSCSI sessions will still be present.
     if ! iscsiadm -m fw; then
         warn "iscsiadm: Could not get list of targets from firmware."
-        return 1
+    else
+        ifaces=( $(echo /sys/firmware/ibft/ethernet*) )
+        [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
+        retry=$(cat /tmp/session-retry)
+
+        if [ $retry -lt ${#ifaces[*]} ]; then
+            let retry++
+            echo $retry > /tmp/session-retry
+            return 1
+        fi
+
+        if ! iscsiadm -m fw -l; then
+            warn "iscsiadm: Log-in to iscsi target failed"
+        else
+            need_shutdown
+        fi
     fi
-
-    ifaces=( $(echo /sys/firmware/ibft/ethernet*) )
-    [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
-    retry=$(cat /tmp/session-retry)
-
-    if [ $retry -lt ${#ifaces[*]} ]; then
-        let retry++
-        echo $retry > /tmp/session-retry
-        return 1
-    fi
-
-    if ! iscsiadm -m fw -l; then
-        warn "iscsiadm: Log-in to iscsi target failed"
-    fi
-
+    [ -d /sys/class/iscsi_session ] || return 1
     echo 'started' > "/tmp/iscsistarted-iscsi:"
     echo 'started' > "/tmp/iscsistarted-firmware"
 
-    need_shutdown
     return 0
 }
 
