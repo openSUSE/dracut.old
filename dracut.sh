@@ -390,6 +390,12 @@ verbosity_mod_l=0
 unset kernel
 unset outfile
 
+if ! tmp_dracut_failed_drivers=$(mktemp /tmp/dracut.XXXXXXXXXX); then
+    echo "Could not create temporary file"
+    exit 1
+fi
+export tmp_dracut_failed_drivers
+
 rearrange_params "$@"
 eval set -- "$TEMP"
 
@@ -1760,6 +1766,15 @@ if ! (
     dfatal "dracut: creation of $outfile failed"
     exit 1
 fi
+
+if [[ -s $tmp_dracut_failed_drivers ]]; then
+    dwarn "Some kernel modules could not be included"
+    dwarn "This is not necessarily an error:"
+    while read line; do
+        dwarn "$line"
+    done < $tmp_dracut_failed_drivers
+fi
+rm $tmp_dracut_failed_drivers
 
 if (( maxloglvl >= 5 )); then
     if [[ $allowlocal ]]; then
