@@ -1129,6 +1129,11 @@ instmods() {
                     return 0
                 fi
 
+                if grep -q "/${_mod}.ko" /lib/modules/$kernel/modules.builtin; then
+                    # Module is built-in
+                    return 0
+                fi
+
                 # If we are building a host-specific initramfs and this
                 # module is not already loaded, move on to the next one.
                 [[ $hostonly ]] \
