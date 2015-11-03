@@ -1084,14 +1084,16 @@ instmods() {
     [[ $no_kernel = yes ]] && return
     # called [sub]functions inherit _fderr
     local _fderr=9
-    local _check=no
+    local _check=yes
     local _silent=no
+
     if [[ $1 = '-c' ]]; then
         _check=yes
         shift
     fi
 
     if [[ $1 = '-s' ]]; then
+        _check=no
         _silent=yes
         shift
     fi
@@ -1173,7 +1175,7 @@ instmods() {
             while read _mod || [ -n "$_mod" ]; do
                 inst1mod "${_mod%.ko*}" || {
                     if [[ "$_check" == "yes" ]] && [[ "$_silent" == "no" ]]; then
-                        dfatal "Failed to install module $_mod"
+                        echo $_mod >> $tmp_dracut_failed_drivers
                     fi
                 }
             done
@@ -1181,7 +1183,7 @@ instmods() {
         while (($# > 0)); do  # filenames as arguments
             inst1mod ${1%.ko*} || {
                 if [[ "$_check" == "yes" ]] && [[ "$_silent" == "no" ]]; then
-                    dfatal "Failed to install module $1"
+                    echo $1 >> $tmp_dracut_failed_drivers
                 fi
             }
             shift
