@@ -1668,6 +1668,12 @@ instmods() {
             --*) _mpargs+=" $_mod" ;;
             *)
                 _mod=${_mod##*/}
+
+                if grep -q "/${_mod}.ko" /lib/modules/$kernel/modules.builtin; then
+                    # Module is built-in
+                    return 0
+                fi
+
                 # Check for aliased modules
                 _modalias=$(modinfo -k $kernel -F filename $_mod 2> /dev/null)
                 _modalias=${_modalias%.ko*}
@@ -1727,18 +1733,16 @@ instmods() {
             while read _mod; do
                 inst1mod "${_mod%.ko*}" || {
                     if [[ "$_check" == "yes" ]] && [[ "$_silent" == "no" ]]; then
-                        dfatal "Failed to install module $_mod"
+                        echo $_mod >> $tmp_dracut_failed_drivers
                     fi
-                    echo $_mod >> $tmp_dracut_failed_drivers
                 }
             done
         fi
         while (($# > 0)); do  # filenames as arguments
             inst1mod ${1%.ko*} || {
                 if [[ "$_check" == "yes" ]] && [[ "$_silent" == "no" ]]; then
-                    dfatal "Failed to install module $1"
+                    echo $1 >> $tmp_dracut_failed_drivers
                 fi
-                echo $1 >> $tmp_dracut_failed_drivers
             }
             shift
         done
