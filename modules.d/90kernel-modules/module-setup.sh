@@ -39,36 +39,51 @@ installkernel() {
             ehci-hcd ehci-pci ehci-platform \
             ohci-hcd ohci-pci \
             uhci-hcd \
-            xhci-hcd xhci-pci xhci-plat-hcd \
             pinctrl-cherryview pwm-lpss pwm-lpss-platform
 
-        # ensure early availability for e.g. emmc phys
-        instmods "=drivers/phy"
-
-        instmods "=drivers/pci/host"
+        hostonly='' instmods \
+            xhci-hcd xhci-pci xhci-plat-hcd \
+            "=drivers/hid" \
+            "=drivers/tty/serial" \
+            "=drivers/input/serio" \
+            "=drivers/input/keyboard" \
+            "=drivers/usb/storage" \
+            "=drivers/pci/host" \
+            ${NULL}
 
         instmods \
-            "=drivers/hid" \
-            "=drivers/input/serio" \
-            "=drivers/input/keyboard"
+            yenta_socket scsi_dh_rdac scsi_dh_emc scsi_dh_alua \
+            atkbd i8042 usbhid firewire-ohci pcmcia hv-vmbus \
+            virtio virtio_blk virtio_ring virtio_pci virtio_scsi \
+            "=drivers/pcmcia" =ide nvme
 
-        instmods yenta_socket scsi_dh_rdac scsi_dh_emc scsi_dh_alua \
-                 atkbd i8042 usbhid firewire-ohci pcmcia hv-vmbus
-
-        if [[ "$(uname -p)" == arm* ]]; then
-            # arm specific modules
+        if [[ "$(uname -m)" == arm* || "$(uname -m)" == aarch64 ]]; then
+            # arm/aarch64 specific modules
+            _blockfuncs+='|dw_mc_probe|dw_mci_pltfm_register'
             instmods \
+                "=drivers/clk" \
+                "=drivers/dma" \
+                "=drivers/extcon" \
+                "=drivers/hwspinlock" \
                 "=drivers/i2c/busses" \
+                "=drivers/mfd" \
+                "=drivers/mmc/core" \
+                "=drivers/phy" \
+                "=drivers/power" \
                 "=drivers/regulator" \
+                "=drivers/rpmsg" \
                 "=drivers/rtc" \
+                "=drivers/soc" \
+                "=drivers/usb/chipidea" \
+                "=drivers/usb/dwc2" \
+                "=drivers/usb/dwc3" \
                 "=drivers/usb/host" \
+                "=drivers/usb/misc" \
+                "=drivers/usb/musb" \
                 "=drivers/usb/phy" \
+		"=drivers/scsi/hisi_sas" \
                 ${NULL}
         fi
-
-        # install virtual machine support
-        instmods virtio virtio_blk virtio_ring virtio_pci virtio_scsi \
-            "=drivers/pcmcia" =ide "=drivers/usb/storage"
 
         find_kernel_modules  |  block_module_filter  |  instmods
 
