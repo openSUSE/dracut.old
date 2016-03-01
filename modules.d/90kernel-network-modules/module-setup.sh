@@ -45,9 +45,9 @@ installkernel() {
             while read _fname; do
                 [[ $_fname =~ $_unwanted_drivers ]] && continue
                 case "$_fname" in
-                    *.ko)    _fcont="$(<        $_fname)" ;;
-                    *.ko.gz) _fcont="$(gzip -dc $_fname)" ;;
-                    *.ko.xz) _fcont="$(xz -dc   $_fname)" ;;
+                    *.ko)    _fcont="$(cat      "$_fname" | tr -cd '[:print:]')" ;;
+                    *.ko.gz) _fcont="$(gzip -dc "$_fname" | tr -cd '[:print:]')" ;;
+                    *.ko.xz) _fcont="$(xz -dc   "$_fname" | tr -cd '[:print:]')" ;;
                 esac
                 [[   $_fcont =~ $_net_drivers
                 && ! $_fcont =~ iw_handler_get_spy ]] \

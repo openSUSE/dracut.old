@@ -49,9 +49,9 @@ installkernel() {
             local _f
             while read _f || [ -n "$_f" ]; do
                 case "$_f" in
-                    *.ko)    [[ $(<         $_f) =~ $_funcs ]] && echo "$_f" ;;
-                    *.ko.gz) [[ $(gzip -dc <$_f) =~ $_funcs ]] && echo "$_f" ;;
-                    *.ko.xz) [[ $(xz -dc   <$_f) =~ $_funcs ]] && echo "$_f" ;;
+                    *.ko)    [[ $(cat       "$_f" | tr -cd '[:print:]') =~ $_funcs ]] && echo "$_f" ;;
+                    *.ko.gz) [[ $(gzip -dc <"$_f" | tr -cd '[:print:]') =~ $_funcs ]] && echo "$_f" ;;
+                    *.ko.xz) [[ $(xz -dc   <"$_f" | tr -cd '[:print:]') =~ $_funcs ]] && echo "$_f" ;;
                 esac
             done
             return 0
