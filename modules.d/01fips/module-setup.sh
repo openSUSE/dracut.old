@@ -20,7 +20,7 @@ installkernel() {
     _fipsmodules+="sha384 sha512 sha512_generic tcrypt tea tnepres twofish wp256 wp384 wp512 xeta xtea xts zlib"
     _fipsmodules+="aes_s390 des_s390 prng sha256_s390 sha_common des_check_key ghash_s390 sha1_s390 sha512_s390"
     _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
-    _fipsmodules+="ghash-clmulni-intel "
+    _fipsmodules+="ghash-clmulni-intel aesni-intel"
 
     _fipsmodules+="drbg"
 
