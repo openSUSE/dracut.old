@@ -3,6 +3,8 @@
 # called by dracut
 check() {
     [[ "$mount_needs" ]] && return 1
+    # Don't include plymouth if plymouth-dracut package not installed
+    [ -x /usr/lib/plymouth/plymouth-populate-initrd ] || return 1
     require_binaries plymouthd plymouth plymouth-set-default-theme
 }
 
@@ -14,9 +16,10 @@ depends() {
 # called by dracut
 install() {
     PKGLIBDIR="/usr/lib/plymouth"
-    if type -P dpkg-architecture &>/dev/null; then
-        PKGLIBDIR="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/plymouth"
-    fi
+    # breaks if dpkg is installed on openSUSE
+    #if type -P dpkg-architecture &>/dev/null; then
+    #    PKGLIBDIR="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/plymouth"
+    #fi
     [ -x /usr/libexec/plymouth/plymouth-populate-initrd ] && PKGLIBDIR="/usr/libexec/plymouth"
 
     if grep -q nash ${PKGLIBDIR}/plymouth-populate-initrd \
