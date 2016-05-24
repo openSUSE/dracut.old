@@ -61,6 +61,7 @@ install_iscsiroot() {
     iscsi_host=${host##*/}
 
     for flash in ${host}/flashnode_sess-* ; do
+        [[ -d $flash ]] || continue
         is_boot=$(cat $flash/is_boot_target)
         if [ $is_boot -eq 1 ] ; then
             # qla4xxx flashnode session; skip iBFT discovery
