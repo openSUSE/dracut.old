@@ -16,6 +16,7 @@ source_hook "$hook"
 
 
 if getargbool 1 rd.shell -d -y rdshell || getarg rd.break -d rdbreak; then
+    FSTXT="/usr/share/fsck/fsck_help_$fstype.txt"
     echo
     rdsosreport
     echo
@@ -26,6 +27,7 @@ if getargbool 1 rd.shell -d -y rdshell || getarg rd.break -d rdbreak; then
     echo 'after mounting them and attach it to a bug report.'
     echo
     echo
+    [ -f $FSTXT ] && cat $FSTXT
     [ -f /etc/profile ] && . /etc/profile
     [ -z "$PS1" ] && export PS1="$_name:\${PWD}# "
     exec sh -i -l
