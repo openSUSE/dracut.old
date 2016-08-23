@@ -25,6 +25,7 @@ install() {
     KBDSUBDIRS=consolefonts,consoletrans,keymaps,unimaps
     DEFAULT_FONT="${i18n_default_font:-LatArCyrHeb-16}"
     I18N_CONF="/etc/locale.conf"
+    I18N_CONF_SUSE="/etc/sysconfig/language"
     VCONFIG_CONF="/etc/vconsole.conf"
 
     # This is from 10redhat-i18n.
@@ -212,9 +213,10 @@ install() {
 
         if dracut_module_included "systemd" && [[ -f ${I18N_CONF} ]]; then
             inst_simple ${I18N_CONF}
-        else
-            mksubdirs ${initdir}${I18N_CONF}
-            print_vars LC_ALL LANG >> ${initdir}${I18N_CONF}
+        fi
+
+        if dracut_module_included "systemd" && [[ -f ${I18N_CONF_SUSE} ]]; then
+            inst_simple ${I18N_CONF_SUSE}
         fi
 
         if dracut_module_included "systemd" && [[ -f ${VCONFIG_CONF} ]]; then
