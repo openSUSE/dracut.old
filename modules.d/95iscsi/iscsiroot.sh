@@ -51,8 +51,20 @@ set_login_retries() {
 
 handle_firmware()
 {
+    local ifaces retry
+
     if ! iscsiadm -m fw; then
         warn "iscsiadm: Could not get list of targets from firmware."
+        return 1
+    fi
+
+    ifaces=( $(echo /sys/firmware/ibft/ethernet*) )
+    [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
+    retry=$(cat /tmp/session-retry)
+
+    if [ $retry -lt ${#ifaces[*]} ]; then
+        let retry++
+        echo $retry > /tmp/session-retry
         return 1
     fi
 
