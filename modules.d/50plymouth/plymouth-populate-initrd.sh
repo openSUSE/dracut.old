@@ -1,10 +1,8 @@
 #!/bin/bash
 
-PLYMOUTH_LOGO_FILE="/usr/share/pixmaps/system-logo-white.png"
 PLYMOUTH_THEME=$(plymouth-set-default-theme)
 
 inst_multiple plymouthd plymouth \
-    "${PLYMOUTH_LOGO_FILE}" \
     /etc/system-release
 
 mkdir -m 0755 -p "${initdir}/usr/share/plymouth"
