@@ -3,8 +3,6 @@
 # called by dracut
 check() {
     local _rootdev
-    # if there's no multipath binary, no go.
-    require_binaries multipath || return 1
 
     is_mpath() {
         local _dev=$1
@@ -16,6 +14,9 @@ check() {
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         for_each_host_dev_and_slaves is_mpath || return 255
     }
+
+    # if there's no multipath binary, no go.
+    require_binaries multipath || return 1
 
     return 0
 }
