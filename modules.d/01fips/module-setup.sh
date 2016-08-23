@@ -13,16 +13,17 @@ depends() {
 # called by dracut
 installkernel() {
     local _fipsmodules _mod
-    _fipsmodules="aead aes_generic aes-x86_64 ansi_cprng arc4 authenc authencesn blowfish camellia cast6 cbc ccm "
-    _fipsmodules+="chainiv crc32c crct10dif_generic cryptomgr crypto_null ctr cts deflate des des3_ede dm-crypt dm-mod drbg "
-    _fipsmodules+="ecb eseqiv fcrypt gcm ghash_generic hmac khazad lzo md4 md5 michael_mic rmd128 "
-    _fipsmodules+="rmd160 rmd256 rmd320 rot13 salsa20 seed seqiv serpent sha1 sha224 sha256 sha256_generic "
-    _fipsmodules+="sha384 sha512 sha512_generic tcrypt tea tnepres twofish wp256 wp384 wp512 xeta xtea xts zlib"
-    _fipsmodules+="aes_s390 des_s390 prng sha256_s390 sha_common des_check_key ghash_s390 sha1_s390 sha512_s390"
-    _fipsmodules+="sha512-ssse3 sha1-ssse3 sha256-ssse3 "
-    _fipsmodules+="ghash-clmulni-intel aesni-intel"
-
-    _fipsmodules+="drbg"
+    _fipsmodules="ansi_cprng arc4 authenc ccm "
+    _fipsmodules+="ctr cts deflate drbg "
+    _fipsmodules+="ecb fcrypt gcm ghash_generic khazad md4 michael_mic rmd128 "
+    _fipsmodules+="rmd160 rmd256 rmd320 seed "
+    _fipsmodules+="sha512_generic tcrypt tea wp512 xts zlib "
+    _fipsmodules+="aes_s390 des_s390 sha256_s390 ghash_s390 sha1_s390 sha512_s390 "
+    _fipsmodules+="gf128mul "
+    _fipsmodules+="cmac vmac xcbc salsa20_generic salsa20_x86_64 camellia_generic camellia_x86_64 pcbc tgr192 anubis "
+    _fipsmodules+="cast6_generic cast5_generic cast_common sha512_ssse3 serpent_sse2_x86_64 serpent_generic twofish_generic "
+    _fipsmodules+="ablk_helper cryptd twofish_x86_64_3way lrw glue_helper twofish_x86_64 twofish_common blowfish_generic "
+    _fipsmodules+="blowfish_x86_64 blowfish_common des_generic "
 
     mkdir -m 0755 -p "${initdir}/etc/modprobe.d"
 
