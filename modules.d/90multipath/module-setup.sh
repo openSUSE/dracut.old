@@ -30,7 +30,7 @@ depends() {
 
 # called by dracut
 cmdline() {
-    for m in scsi_dh_alua scsi_dh_emc scsi_dh_rdac ; do
+    for m in scsi_dh_alua scsi_dh_emc scsi_dh_rdac dm_multipath; do
         if module_is_host_only $m ; then
             printf 'rd.driver.pre=%s ' "$m"
         fi
