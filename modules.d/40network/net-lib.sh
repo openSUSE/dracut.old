@@ -573,15 +573,6 @@ parse_ifname_opts() {
             ;;
     esac
 
-    case $ifname_if in
-        eth[0-9]|eth[0-9][0-9]|eth[0-9][0-9][0-9]|eth[0-9][0-9][0-9][0-9])
-            warn "ifname=$ifname_if uses the kernel name space for interfaces"
-            warn "This can fail for multiple network interfaces and is discouraged!"
-            warn "Please use a custom name like \"netboot\" or \"bluesocket\""
-            warn "or use biosdevname and no ifname= at all."
-            ;;
-    esac
-
 }
 
 # some network driver need long time to initialize, wait before it's ready.
