@@ -279,6 +279,7 @@ install() {
         mkdir -p "${initdir}/$systemdsystemunitdir/basic.target.wants"
         for i in \
                 iscsid.service \
+                iscsiuio.service \
             ; do
             ln_r "$systemdsystemunitdir/${i}" "$systemdsystemunitdir/basic.target.wants/${i}"
         done

@@ -264,11 +264,9 @@ if [ "$netif" = "timeout" ] && all_ifaces_setup; then
 fi
 
 if getargbool 0 rd.iscsi.firmware -d -y iscsi_firmware ; then
-    if [ "$netif" = "timeout" ] || [ "$netif" = "online" ]; then
-        [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
-        handle_firmware
-        ret=$?
-    fi
+    [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
+    handle_firmware
+    ret=$?
 fi
 
 if ! [ "$netif" = "online" ]; then
