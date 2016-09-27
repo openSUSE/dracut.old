@@ -62,13 +62,14 @@ handle_firmware()
         warn "iscsiadm: Could not get list of targets from firmware."
     else
         ifaces=( $(echo /sys/firmware/ibft/ethernet*) )
-        [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
         retry=$(cat /tmp/session-retry)
 
         if [ $retry -lt ${#ifaces[*]} ]; then
             let retry++
             echo $retry > /tmp/session-retry
             return 1
+        else
+            rm /tmp/session-retry
         fi
 
         if ! iscsiadm -m fw -l; then
@@ -250,7 +251,7 @@ handle_netroot()
 
 ret=0
 
-if [ "$netif" != "timeout" ] && getargbool 1 rd.iscsi.waitnet; then
+if [ "$netif" != "timeout" ] && getargbool 0 rd.iscsi.waitnet; then
     all_ifaces_setup || exit 0
 fi
 
@@ -264,6 +265,7 @@ fi
 
 if getargbool 0 rd.iscsi.firmware -d -y iscsi_firmware ; then
     if [ "$netif" = "timeout" ] || [ "$netif" = "online" ]; then
+        [ -f /tmp/session-retry ] || echo 1 > /tmp/session-retry
         handle_firmware
         ret=$?
     fi
