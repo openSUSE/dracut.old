@@ -506,10 +506,12 @@ for p in $(getargs ip=); do
     [ "$autoconf" = "ibft" ] && continue
 
     # skip if same configuration appears twice
-    while read line
-    do
-      [ "$line" = "$p" ] && continue 2
-    done < /tmp/net.${netif}.conf
+    if [ -f /tmp/net.${netif}.conf ] ; then
+        while read line
+        do
+            [ "$line" = "$p" ] && continue 2
+        done < /tmp/net.${netif}.conf
+    fi
 
     echo $p >> /tmp/net.${netif}.conf
 
