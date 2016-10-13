@@ -61,7 +61,7 @@ install_ibft() {
         fi
         if [ -d ${d}/initiator ] ; then
             if [ ${d##*/} = "ibft" ] && [ "$ibft_mod" != "bnx2i" ] ; then
-                echo -n "ip=ibft "
+                echo -n "rd.iscsi.ibft=1 "
             fi
             echo -n "rd.iscsi.firmware=1"
         fi
