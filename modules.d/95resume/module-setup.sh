@@ -2,6 +2,11 @@
 
 # called by dracut
 check() {
+    if dracut_module_included "iscsi" ; then
+        # Do not attempt resume on iscsi
+        return 255
+    fi
+
     # No point trying to support resume, if no swap partition exist
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         for fs in "${host_fs_types[@]}"; do
