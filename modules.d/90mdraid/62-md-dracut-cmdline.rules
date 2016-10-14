@@ -1,0 +1,16 @@
+# Interpret dracut-specific commandline arguments which inhibit
+# mdadm from starting
+# See udev(8) for syntax
+
+ACTION!="add|change", GOTO="md_end"
+SUBSYSTEM!="block", GOTO="md_end"
+
+# Disable MD assembly if rd_NO_MD is given
+ENV{rd_NO_MD}=="?*", ENV{ID_FS_TYPE}=="ddf_raid_member|isw_raid_member|linux_raid_member", ENV{ID_FS_TYPE}="unknown"
+
+# Disable ISW / IMSM RAID assembly if rd_NO_MDIMSM is given
+ENV{ID_FS_TYPE}=="isw_raid_member", ENV{rd_NO_MDIMSM}=="?*", ENV{ID_FS_TYPE}="unknown"
+# Disable DDF RAID assembly if rd_NO_MDDDF is given
+ENV{ID_FS_TYPE}=="ddf_raid_member", ENV{rd_NO_MDDDF}=="?*", ENV{ID_FS_TYPE}="unknown"
+
+LABEL="md_end"

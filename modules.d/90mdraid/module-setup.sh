@@ -79,18 +79,8 @@ install() {
     inst_rules 64-md-raid.rules
     # >=mdadm-3.3 udev rules
     inst_rules 63-md-raid-arrays.rules 64-md-raid-assembly.rules
-    # remove incremental assembly from stock rules, so they don't shadow
-    # 65-md-inc*.rules and its fine-grained controls, or cause other problems
-    # when we explicitly don't want certain components to be incrementally
-    # assembled
-    for rule in 64-md-raid.rules 64-md-raid-assembly.rules; do
-        rule_path="${initdir}${udevdir}/rules.d/${rule}"
-        [ -f "${rule_path}" ] && sed -i -r \
-            -e '/(RUN|IMPORT\{program\})\+?="[[:alpha:]/]*mdadm[[:blank:]]+(--incremental|-I)[[:blank:]]+(--export )?(\$env\{DEVNAME\}|\$tempnode|\$devnode)/d' \
-            "${rule_path}"
-    done
 
-    inst_rules "$moddir/65-md-incremental-imsm.rules"
+    inst_rules "$moddir/62-md-dracut-cmdline.rules"
 
     inst_rules "$moddir/59-persistent-storage-md.rules"
     prepare_udev_rules 59-persistent-storage-md.rules
@@ -125,12 +115,10 @@ install() {
     inst_hook cleanup 99 "$moddir/mdraid-needshutdown.sh"
     inst_hook shutdown 30 "$moddir/md-shutdown.sh"
     inst_script "$moddir/mdraid-cleanup.sh" /sbin/mdraid-cleanup
-    inst_script "$moddir/mdraid_start.sh" /sbin/mdraid_start
     if dracut_module_included "systemd"; then
         if [ -e $systemdsystemunitdir/mdmon@.service ]; then
             inst_simple $systemdsystemunitdir/mdmon@.service
         fi
     fi
     inst_hook pre-shutdown 30 "$moddir/mdmon-pre-shutdown.sh"
-    dracut_need_initqueue
 }
