@@ -1,31 +1,27 @@
 #!/bin/sh
 
 MD_UUID=$(getargs rd.md.uuid -d rd_MD_UUID=)
+MD_RULES=/etc/udev/62-md-dracut-uuid.rules
 
 if ( ! [ -n "$MD_UUID" ] && ! getargbool 0 rd.auto ) || ! getargbool 1 rd.md -d -n rd_NO_MD; then
     info "rd.md=0: removing MD RAID activation"
     udevproperty rd_NO_MD=1
 else
-    # rewrite the md rules to only process the specified raid array
+    # Create md rule to only process the specified raid array
     if [ -n "$MD_UUID" ]; then
-        for f in /etc/udev/rules.d/65-md-incremental*.rules; do
-            [ -e "$f" ] || continue
-            while read line || [ -n "$line" ]; do
-                if [ "${line%%UUID CHECK}" != "$line" ]; then
-                    printf 'IMPORT{program}="/sbin/mdadm --examine --export $tempnode"\n'
-                    for uuid in $MD_UUID; do
-                        printf 'ENV{MD_UUID}=="%s", GOTO="md_uuid_ok"\n' $uuid
-                        printf 'ENV{ID_FS_UUID}=="%s", GOTO="md_uuid_ok"\n' $uuid
-                    done;
-                    printf 'GOTO="md_end"\n'
-                    printf 'LABEL="md_uuid_ok"\n'
-                    printf 'ENV{IMSM_NO_PLATFORM}="1"'
-                else
-                    echo "$line"
-                fi
-            done < "${f}" > "${f}.new"
-            mv "${f}.new" "$f"
-        done
+        printf 'ACTION!="add|change", GOTO="md_uuid_end"\n' > $MD_RULES
+        printf 'SUBSYSTEM!="block", GOTO="md_uuid_end"\n' >> $MD_RULES
+        printf 'ENV{ID_FS_TYPE}!="ddf_raid_member", ENV{ID_FS_TYPE}!="isw_raid_member", ENV{ID_FS_TYPE}!="linux_raid_member", GOTO="md_uuid_end"\n' >> $MD_RULES
+
+        for uuid in $MD_UUID; do
+            printf 'ENV{MD_UUID}=="%s", GOTO="md_uuid_ok"\n' $uuid >> $MD_RULES
+            printf 'ENV{ID_FS_UUID}=="%s", GOTO="md_uuid_ok"\n' $uuid >> $MD_RULES
+        done;
+        printf 'ENV{ID_FS_TYPE}="unknown"\n' >> $MD_RULES
+        printf 'GOTO="md_uuid_end"\n' >> $MD_RULES
+        printf 'LABEL="md_uuid_ok"\n' >> $MD_RULES
+        printf 'ENV{IMSM_NO_PLATFORM}="1"' >> $MD_RULES
+        printf 'LABEL="md_uuid_end"\n' >> $MD_RULES
     fi
 fi
 
