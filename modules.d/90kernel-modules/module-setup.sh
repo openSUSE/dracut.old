@@ -39,7 +39,8 @@ installkernel() {
             ehci-hcd ehci-pci ehci-platform \
             ohci-hcd ohci-pci \
             uhci-hcd \
-            xhci-hcd xhci-pci xhci-plat-hcd
+            xhci-hcd xhci-pci xhci-plat-hcd \
+            pinctrl-cherryview
 
         instmods \
             "=drivers/hid" \
