@@ -73,11 +73,17 @@ do_fips()
     local _s
     local _v
     local _module
+    local _arch=$(uname -m)
+    local _vmname=vmlinuz
+
+    if [ "$_arch" == "s390x" ]; then
+        _vmname=image
+    fi
 
     KERNEL=$(uname -r)
 
-    if ! [ -e "/boot/.vmlinuz-${KERNEL}.hmac" ]; then
-        warn "/boot/.vmlinuz-${KERNEL}.hmac does not exist"
+    if ! [ -e "/boot/.${_vmname}-${KERNEL}.hmac" ]; then
+        warn "/boot/.${_vname}-${KERNEL}.hmac does not exist"
         return 1
     fi
 
@@ -125,7 +131,7 @@ do_fips()
     elif [ -e "/run/initramfs/live/isolinux/vmlinuz0" ]; then
         do_rhevh_check /run/initramfs/live/isolinux/vmlinuz0 || return 1
     else
-        fipscheck "/boot/vmlinuz-${KERNEL}" || return 1
+        fipscheck "/boot/${_vmname}-${KERNEL}" || return 1
     fi
 
     info "All initrd crypto checks done"
