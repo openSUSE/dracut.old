@@ -17,7 +17,7 @@ installkernel() {
     _fipsmodules+="ctr cts deflate drbg "
     _fipsmodules+="ecb fcrypt gcm ghash_generic khazad md4 michael_mic rmd128 "
     _fipsmodules+="rmd160 rmd256 rmd320 seed "
-    _fipsmodules+="sha512_generic tcrypt tea wp512 xts zlib "
+    _fipsmodules+="sha512_generic tcrypt tea wp512 xts "
     _fipsmodules+="aes_s390 des_s390 sha256_s390 ghash_s390 sha1_s390 sha512_s390 "
     _fipsmodules+="gf128mul "
     _fipsmodules+="cmac vmac xcbc salsa20_generic salsa20_x86_64 camellia_generic camellia_x86_64 pcbc tgr192 anubis "
