@@ -105,11 +105,11 @@ do_fips()
                 # If we find some hardware specific modules and cannot load them
                 # it is not a problem, proceed.
                 if [ "$_found" = "0" ]; then
-                    if [    "$_module" != "${_module%-intel}"   \
-                        -o  "$_module" != "${_module%-ssse3}"   \
-                        -o  "$_module" != "${_module%-x86_64}"  \
+                    if [    "$_module" != "${_module%intel}"    \
+                        -o  "$_module" != "${_module%ssse3}"    \
+                        -o  "$_module" != "${_module%x86_64}"   \
                         -o  "$_module" != "${_module%z90}"      \
-                        -o  "$_module" != "${_module%s390}"      \
+                        -o  "$_module" != "${_module%s390}"     \
                     ]; then
                         _found=1
                     fi
