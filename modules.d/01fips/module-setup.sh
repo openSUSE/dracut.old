@@ -23,7 +23,7 @@ installkernel() {
     _fipsmodules+="cmac vmac xcbc salsa20_generic salsa20_x86_64 camellia_generic camellia_x86_64 pcbc tgr192 anubis "
     _fipsmodules+="cast6_generic cast5_generic cast_common sha512_ssse3 serpent_sse2_x86_64 serpent_generic twofish_generic "
     _fipsmodules+="ablk_helper cryptd twofish_x86_64_3way lrw glue_helper twofish_x86_64 twofish_common blowfish_generic "
-    _fipsmodules+="blowfish_x86_64 blowfish_common des_generic "
+    _fipsmodules+="blowfish_x86_64 blowfish_common des_generic cbc "
 
     mkdir -m 0755 -p "${initdir}/etc/modprobe.d"
 
