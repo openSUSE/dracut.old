@@ -110,6 +110,9 @@ do_fips()
                         -o  "$_module" != "${_module%x86_64}"   \
                         -o  "$_module" != "${_module%z90}"      \
                         -o  "$_module" != "${_module%s390}"     \
+                        -o  "$_module" == "twofish_x86_64_3way" \
+                        -o  "$_module" == "ablk_helper"         \
+                        -o  "$_module" == "glue_helper"         \
                     ]; then
                         _found=1
                     fi
