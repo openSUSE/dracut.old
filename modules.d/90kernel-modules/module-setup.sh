@@ -64,6 +64,9 @@ installkernel() {
             xhci-hcd xhci-pci xhci-plat-hcd \
             pinctrl-cherryview pwm-lpss pwm-lpss-platform
 
+        # ensure early availability for e.g. emmc phys
+        instmods "=drivers/phy"
+
         instmods \
             "=drivers/hid" \
             "=drivers/input/serio" \
