@@ -1237,7 +1237,7 @@ if [[ $hostonly ]]; then
             host_modules["$alias"]=1
         done
         # mod might be an alias in the target kernel, find the real module
-        mod_filename=$(modinfo -k "$kernel" "$mod" -F filename)
+        mod_filename=$(modinfo -k "$kernel" "$mod" -F filename 2>/dev/null)
         [ $? -ne 0 ] && continue
         host_modules["$(basename -s .ko "$mod_filename")"]=1
     done
