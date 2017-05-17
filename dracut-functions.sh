@@ -33,7 +33,11 @@ if [[ $initdir ]] && ! [[ -d $initdir ]]; then
 fi
 
 # Generic substring function.  If $2 is in $1, return 0.
-strstr() { [[ $1 = *$2* ]]; }
+strstr() { [[ $1 = *"$2"* ]]; }
+# Generic glob matching function. If glob pattern $2 matches anywhere in $1, OK
+strglobin() { [[ $1 = *$2* ]]; }
+# Generic glob matching function. If glob pattern $2 matches all of $1, OK
+strglob() { [[ $1 = $2 ]]; }
 
 # helper function for check() in module-setup.sh
 # to check for required installed binaries
@@ -49,7 +53,7 @@ require_binaries() {
 
     for cmd in "$@"; do
         if ! find_binary "$cmd" &>/dev/null; then
-            dinfo "$_module_name: Could not find command '$cmd'!"
+            dinfo "dracut module '${_module_name#[0-9][0-9]}' will not be installed, because command '$cmd' could not be found!"
             ((_ret++))
         fi
     done
@@ -221,7 +225,7 @@ print_vars() {
 
     for _var in "$@"
     do
-        eval printf -v _value "%s" "\$$_var"
+        eval printf -v _value "%s" \""\$$_var"\"
         [[ ${_value} ]] && printf '%s="%s"\n' "$_var" "$_value"
     done
 }
