@@ -91,7 +91,7 @@ else
 fi
 
 dhcp_apply() {
-    unset IPADDR INTERFACE BROADCAST NETWORK PREFIXLEN ROUTES GATEWAYS HOSTNAME DNSDOMAIN DNSSEARCH DNSSERVERS
+    unset IPADDR INTERFACE BROADCAST NETWORK PREFIXLEN ROUTES GATEWAYS MTU HOSTNAME DNSDOMAIN DNSSEARCH DNSSERVERS
     if [ -f /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} ]; then
         . /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1}
     else
@@ -128,6 +128,9 @@ dhcp_apply() {
             ip $1 route add default via "$g" dev "$INTERFACE" && break
         done
     fi
+
+    # Set MTU
+    [ -n "${MTU}" ] && ip $1 link set mtu "$MTU" dev "$INTERFACE"
 
     # Setup hostname
     [ -n "${HOSTNAME}" ] && hostname "$HOSTNAME"
@@ -168,6 +171,25 @@ dhcp_apply() {
     return 0
 }
 
+read_ifcfg() {
+    unset PREFIXLEN LLADDR MTU REMOTE_IPADDR GATEWAY BOOTPROTO
+
+    if [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
+        # Pull in existing configuration
+        . /etc/sysconfig/network/ifcfg-${netif}
+
+        # The first configuration can be anything
+        [ -n "$PREFIXLEN" ] && prefix=${PREFIXLEN}
+        [ -n "$LLADDR" ] && macaddr=${LLADDR}
+        [ -n "$MTU" ] && mtu=${MTU}
+        [ -n "$REMOTE_IPADDR" ] && server=${REMOTE_IPADDR}
+        [ -n "$GATEWAY" ] && gw=${GATEWAY}
+        [ -n "$BOOTPROTO" ] && autoconf=${BOOTPROTO}
+        return 0
+    fi
+    return 1
+}
+
 # Run dhclient
 do_dhcp() {
     # dhclient-script will mark the netif up and generate the online
@@ -193,14 +215,14 @@ do_dhcp() {
         dhclient="wickedd-dhcp4 --test"
     fi
 
-    if ! iface_has_link $netif; then
-        warn "No carrier detected"
-        warn "Trying to set $netif up..."
-        ip $1 link set dev "$netif" up
-        if ! iface_has_link $netif; then
-            warn "Failed..."
-            return 1
-        fi
+    if ! linkup $netif; then
+        warn "Could not bring interface $netif up!"
+        return 1
+    fi
+    
+    if read_ifcfg ; then
+        [ -n "$macaddr" ] && ip $1 link set address $macaddr dev $netif
+        [ -n "$mtu" ] && ip $1 link set mtu $mtu dev $netif
     fi
 
     echo "Starting dhcp for interface $netif"
@@ -241,17 +263,7 @@ do_ipv6auto() {
 
 # Handle ip configuration via ifcfg files
 do_ifcfg() {
-    if [ "$autoconf" = "static" ] &&
-        [ -e /etc/sysconfig/network/ifcfg-${netif} ] ; then
-        # Pull in existing static configuration
-        . /etc/sysconfig/network/ifcfg-${netif}
-
-        # The first configuration can be anything
-        [ -n "$PREFIXLEN" ] && prefix=${PREFIXLEN}
-        [ -n "$MTU" ] && mtu=${MTU}
-        [ -n "$REMOTE_IPADDR" ] && server=${REMOTE_IPADDR}
-        [ -n "$GATEWAY" ] && gw=${GATEWAY}
-        [ -n "$BOOTPROTO" ] && autoconf=${BOOTPROTO}
+    if [ "$autoconf" = "static" ] && read_ifcfg; then
         case "$autoconf" in
             dhcp6)
                 load_ipv6
