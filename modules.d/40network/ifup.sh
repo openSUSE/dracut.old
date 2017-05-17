@@ -298,10 +298,12 @@ do_static() {
         # note no ip addr flush for ipv6
         ip addr add $ip/$prefix ${srv:+peer $srv} dev $netif
         wait_for_ipv6_dad $netif
+        [ "$gw" = "::" ] && gw=""
     else
         # Assume /24 prefix for IPv4
         [ -z "$prefix" ] && prefix=24
         ip addr add $ip/$prefix ${srv:+peer $srv} brd + dev $netif
+        [ "$gw" = "0.0.0.0" ] && gw=""
     fi
 
     [ -n "$gw" ] && echo ip route add default via $gw dev $netif > /tmp/net.$netif.gw
@@ -319,6 +321,9 @@ do_static() {
     done
 
     [ -n "$hostname" ] && echo "echo $hostname > /proc/sys/kernel/hostname" > /tmp/net.$netif.hostname
+
+    [ $? -ne 0 ] && info "Static network setup returned $?"
+    return 0
 }
 
 # loopback is always handled the same way

@@ -43,17 +43,43 @@ if [ -e /sys/module/bnx2i ] && ! [ -e /tmp/iscsiuio-started ]; then
         > /tmp/iscsiuio-started
 fi
 
+#set value for iscsistart login retry
+set_login_retries() {
+    local default retries
+    default=2
+    retries=$(getarg rd.iscsistart.retries)
+    return ${retries:-$default}
+}
+
+
 handle_firmware()
 {
     if ! [ -e /tmp/iscsistarted-firmware ]; then
+        local ipparam retries
+
         if ! iscsistart -f; then
             warn "iscistart: Could not get list of targets from firmware."
             return 1
+        fi
+        
+        #default to ip setup via ibft
+        ipparam=$(getarg ip)
+        if [ "$ipparam" = "ibft" ] || [ -z "$ipparam" ]; then 
+           iscsistart -N
         fi
 
         for p in $(getargs rd.iscsi.param -d iscsi_param); do
 	    iscsi_param="$iscsi_param --param $p"
         done
+
+        #limit iscsistart login retries
+        if [[ ! "$iscsi_param" =~ "node.session.initial_login_retry_max" ]]; then 
+            set_login_retries
+            retries=$?
+            if [ $retries -gt 0 ]; then
+               iscsi_param="${iscsi_param% } --param node.session.initial_login_retry_max=$retries"   
+            fi
+        fi
 
         if ! iscsistart -b $iscsi_param; then
             warn "'iscsistart -b $iscsi_param' failed"
@@ -81,6 +107,7 @@ handle_netroot()
     local iscsi_iface_name iscsi_netdev_name
     local iscsi_param
     local p
+    local retries tgtopenip tgtopenname nrip tgtwait tgtip failcnt path failpath fakepath intf up
 
     # override conf settings by command line options
     arg=$(getarg rd.iscsi.initiator -d iscsi_initiator=)
@@ -106,6 +133,15 @@ handle_netroot()
     done
 
     parse_iscsi_root "$1" || return 1
+
+    #limit iscsistart login retries
+    if [[ ! "$iscsi_param" =~ "node.session.initial_login_retry_max" ]]; then 
+        set_login_retries
+        retries=$?
+        if [ $retries -gt 0 ]; then
+            iscsi_param="${iscsi_param% } --param node.session.initial_login_retry_max=$retries"   
+        fi
+    fi
 
 # XXX is this needed?
     getarg ro && iscsirw=ro
@@ -178,8 +214,60 @@ handle_netroot()
         ${iscsi_param} \
 	|| :
 
-    netroot_enc=$(str_replace "$1" '/' '\2f')
-    echo 'started' > "/tmp/iscsistarted-iscsi:${netroot_enc}"
+    #get open paths (target ip and name)
+    tgtopenip=$(cat /sys/class/iscsi_connection/connection*/address) 
+    tgtopenname=$(cat /sys/class/iscsi_session/session*/targetname)
+    #get paths from netroot (only ip is needed for acounting)
+    nrip=$(getargs netroot | sed 's/ /\n/g' | sed -n "/$iscsi_target_name/s/.*[:@]\([[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*\.[[:digit:]]*\):.*/\1/p") 
+    [[ $nrip ]] || \
+        nrip=$(getargs netroot |  sed 's/ /\n/g' | sed -n "/$iscsi_target_name/s/^.*:\(\[.*\]\):.*/\1/p")  
+    [[ -f /tmp/netrootips ]] || echo $nrip | sed 's/ /\n/g' > /tmp/netrootips
+
+    #remove the ip if the path is connected or add it when not in netrootips
+    if [[ "$tgtopenip" =~ $iscsi_target_ip ]]; then
+        if [[ "$tgtopenname" =~ $iscsi_target_name ]]; then
+            sed -i "0,/$iscsi_target_ip/{//d;}" /tmp/netrootips
+            netroot_enc=$(str_replace "$1" '/' '\2f')
+            echo 'started' > "/tmp/iscsistarted-iscsi:${netroot_enc}.path"
+        fi
+    else
+        tgtip=$(cat /tmp/netrootips)
+        if [[ ! "$tgtip" =~ $iscsi_target_ip ]]; then     
+            echo $iscsi_target_ip >> /tmp/netrootips
+        fi
+    fi 
+
+    #check wheter all paths are connected
+    tgtwait=$(sed -n '/[[:digit:]]\+[.:]/p' /tmp/netrootips)
+    if [ -z "$tgtwait" ]; then 
+        for path in $(ls /tmp/iscsistarted-iscsi*.path); do 
+            mv $path ${path%%.path} 
+        done
+    else
+        #set up all netroot interfaces 
+        for intf in $(cat /tmp/net.ifaces); do
+            up=$(ip link show up $intf)
+            [[ $up ]] || ifup $intf
+        done
+        #retry if all  netroot interfaces are up and some paths are missing
+        if [ $retry -gt 2 ]; then
+            for path in $(ls /tmp/iscsistarted-iscsi*$iscsi_target_name.path); do
+                for failpath in "$tgtwait"; do
+                    fakepath=$(echo $path | sed "s/-iscsi:\([[:digit:]]\+[.:]\)\+/-iscsi:$failpath:/")
+                    [[ $fakepath ]] || \
+                       fakepath=$(echo $path | sed "s/-iscsi:\(\[.*\]\)/-iscsi:$failpath/")
+                    cp $path ${fakepath%%.path}
+                done
+                mv $path ${path%%.path}
+            done
+        elif [[ ! "$tgtopenname" =~ $iscsi_target_name ]]; then
+            # returning 3 triggers a retry
+            info "Retrying login to $iscsi_target_name via $iscsi_target_ip"
+            return 3
+        fi
+    fi
+
+    return 0
 }
 
 ret=0
@@ -190,7 +278,12 @@ if getarg netroot; then
         [ "${nroot%%:*}" = "iscsi" ] || continue
         nroot="${nroot##iscsi:}"
         if [ -n "$nroot" ]; then
+            retry=0
             handle_netroot "$nroot"
+            while [ $? -eq 3 ]; do
+               let retry++
+               handle_netroot "$nroot"
+            done
             ret=$(($ret + $?))
         fi
     done
@@ -201,6 +294,10 @@ if getarg netroot; then
 else
     if [ -n "$iroot" ]; then
         handle_netroot "$iroot"
+            while [ $? -eq 3 ]; do
+               let retry++
+               handle_netroot "$iroot"
+            done
         ret=$?
     else
         if getargbool 0 rd.iscsi.firmware -d -y iscsi_firmware ; then
