@@ -17,7 +17,7 @@ export _rdshell_name="dracut" action="Boot" hook="emergency"
 source_hook "$hook"
 
 
-if getargbool 1 rd.shell -d -y rdshell || getarg rd.break -d rdbreak; then
+if getargbool 0 rd.shell -d -y rdshell || getarg rd.break -d rdbreak; then
     echo
     rdsosreport
     echo
