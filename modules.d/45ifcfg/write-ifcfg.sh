@@ -3,6 +3,8 @@
 # ex: ts=8 sw=4 sts=4 et filetype=sh
 
 # NFS root might have reached here before /tmp/net.ifaces was written
+type is_persistent_ethernet_name >/dev/null 2>&1 || . /lib/net-lib.sh
+
 udevadm settle --timeout=30
 
 if [ -e /tmp/bridge.info ]; then
@@ -85,7 +87,7 @@ for netup in /tmp/net.*.did-setup ; do
 
     netif=${netup%%.did-setup}
     netif=${netif##*/net.}
-    strstr "$netif" ":*:*:*:*:" && continue
+    strglobin "$netif" ":*:*:*:*:" && continue
     [ -e /tmp/ifcfg/ifcfg-$netif ] && continue
     unset bridge
     unset bond
@@ -120,9 +122,9 @@ for netup in /tmp/net.*.did-setup ; do
         echo "ONBOOT=yes"
         echo "NETBOOT=yes"
         echo "UUID=\"$uuid\""
+        strstr "$(ip -6 addr show dev $netif)" 'inet6' && echo "IPV6INIT=yes"
         if [ -f /tmp/dhclient.$netif.lease ]; then
             [ -f /tmp/dhclient.$netif.dhcpopts ] && . /tmp/dhclient.$netif.dhcpopts
-            strstr "$ip" '*:*:*' && echo "IPV6INIT=yes"
             if [ -f /tmp/net.$netif.has_ibft_config ]; then
                 echo "BOOTPROTO=ibft"
             else
@@ -132,7 +134,7 @@ for netup in /tmp/net.*.did-setup ; do
         else
             # If we've booted with static ip= lines, the override file is there
             [ -e /tmp/net.$netif.override ] && . /tmp/net.$netif.override
-            if strstr "$ip" '*:*:*'; then
+            if strglobin "$ip" '*:*:*'; then
                 echo "IPV6INIT=yes"
                 echo "IPV6_AUTOCONF=no"
                 echo "IPV6ADDR=\"$ip/$mask\""
@@ -149,7 +151,7 @@ for netup in /tmp/net.*.did-setup ; do
                     fi
                 fi
             fi
-            if strstr "$gw" '*:*:*'; then
+            if strglobin "$gw" '*:*:*'; then
                 echo "IPV6_DEFAULTGW=\"$gw\""
             elif [ -n "$gw" ]; then
                 echo "GATEWAY=\"$gw\""
@@ -164,7 +166,13 @@ for netup in /tmp/net.*.did-setup ; do
         {
             [ -n "$macaddr" ] && echo "MACADDR=\"$macaddr\""
             if ! print_s390 $netif; then
-                [ -n "$macaddr" ] || echo "HWADDR=\"$(cat /sys/class/net/$netif/address)\""
+                if [ -z "$macaddr" ] && \
+                    ! is_persistent_ethernet_name "$netif" && \
+                    [ -f /sys/class/net/$netif/addr_assign_type ] && \
+                    [ "$(cat /sys/class/net/$netif/addr_assign_type)" = "0" ] && \
+                    [ -f /sys/class/net/$netif/address ]; then
+                    echo "HWADDR=\"$(cat /sys/class/net/$netif/address)\""
+                fi
             fi
             echo "TYPE=Ethernet"
             echo "NAME=\"$netif\""
