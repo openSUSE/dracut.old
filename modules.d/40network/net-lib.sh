@@ -377,7 +377,7 @@ ip_to_var() {
     # ip=<ipv4-address> means anaconda-style static config argument cluster:
     # ip=<ip> gateway=<gw> netmask=<nm> hostname=<host> mtu=<mtu>
     # ksdevice={link|bootif|ibft|<MAC>|<ifname>}
-    if strstr "$autoconf" "*.*.*.*"; then
+    if strglob "$autoconf" "*.*.*.*"; then
         ip="$autoconf"
         gw=$(getarg gateway=)
         mask=$(getarg netmask=)
@@ -515,4 +515,28 @@ find_iface_with_link() {
         fi
     done
     return 1
+}
+
+is_persistent_ethernet_name() {
+    case "$1" in
+        # udev persistent interface names
+        eth[0-9]|eth[0-9][0-9]|eth[0-9][0-9][0-9]*)
+            ;;
+        eno[0-9]|eno[0-9][0-9]|eno[0-9][0-9][0-9]*)
+            ;;
+        ens[0-9]|ens[0-9][0-9]|ens[0-9][0-9][0-9]*)
+            ;;
+        enp[0-9]s[0-9]*|enp[0-9][0-9]s[0-9]*|enp[0-9][0-9][0-9]*s[0-9]*)
+            ;;
+        enP*p[0-9]s[0-9]*|enP*p[0-9][0-9]s[0-9]*|enP*p[0-9][0-9][0-9]*s[0-9]*)
+            ;;
+        # biosdevname
+        em[0-9]|em[0-9][0-9]|em[0-9][0-9][0-9]*)
+            ;;
+        p[0-9]p[0-9]*|p[0-9][0-9]p[0-9]*|p[0-9][0-9][0-9]*p[0-9]*)
+            ;;
+        *)
+            return 1
+    esac
+    return 0
 }

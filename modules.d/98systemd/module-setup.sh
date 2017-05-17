@@ -44,6 +44,7 @@ install() {
         $systemdutildir/systemd-modules-load \
         $systemdutildir/systemd-vconsole-setup \
         $systemdutildir/system-generators/systemd-fstab-generator \
+        $systemdutildir/system-generators/systemd-gpt-auto-generator \
         \
         $systemdsystemunitdir/cryptsetup.target \
         $systemdsystemunitdir/emergency.target \
@@ -191,7 +192,7 @@ install() {
     inst_script "$moddir/dracut-mount.sh" /bin/dracut-mount
     inst_script "$moddir/dracut-pre-pivot.sh" /bin/dracut-pre-pivot
 
-    inst_script "$moddir/rootfs-generator.sh" /lib/systemd/system-generators/dracut-rootfs-generator
+    inst_script "$moddir/rootfs-generator.sh" $systemdutildir/system-generators/dracut-rootfs-generator
 
     inst_binary true
     ln_r $(type -P true) "/usr/bin/loginctl"
