@@ -20,6 +20,7 @@ else
                     done;
                     printf 'GOTO="md_end"\n'
                     printf 'LABEL="md_uuid_ok"\n'
+                    printf 'ENV{IMSM_NO_PLATFORM}="1"'
                 else
                     echo "$line"
                 fi
