@@ -83,7 +83,7 @@ do_fips()
     KERNEL=$(uname -r)
 
     if ! [ -e "/boot/.${_vmname}-${KERNEL}.hmac" ]; then
-        warn "/boot/.${_vname}-${KERNEL}.hmac does not exist"
+        warn "/boot/.${_vmname}-${KERNEL}.hmac does not exist"
         return 1
     fi
 
