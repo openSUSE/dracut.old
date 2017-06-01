@@ -56,6 +56,10 @@ install() {
     # eudev rules
     inst_rules 80-drivers-modprobe.rules
 
+    # bsc#1040153
+    inst_rules 61-persistent-storage-compat.rules
+    inst_multiple -o ${udevdir}/compat-symlink-generation
+
     if dracut_module_included "systemd"; then
         inst_multiple -o ${systemdutildir}/network/*.link
         [[ $hostonly ]] && inst_multiple -H -o /etc/systemd/network/*.link
