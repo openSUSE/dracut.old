@@ -788,6 +788,7 @@ declare -A suse_mod_deps
 while read -r line; do
     _suse_mod="${line##*SUSE INITRD: }"
     _suse_mod="${_suse_mod%% REQUIRES*}"
+    test -z $_suse_mod && continue
     suse_mod_deps["$_suse_mod"]="${suse_mod_deps["$_suse_mod"]} ${line##*REQUIRES }"
 done <<< "$(grep -h "^# SUSE INITRD: " /etc/modprobe.d/[0-9][0-9]*.conf)"
 
