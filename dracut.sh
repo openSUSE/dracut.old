@@ -632,12 +632,6 @@ if ! [[ $kernel ]]; then
     kernel=$(uname -r)
 fi
 
-if [[ $kernel ]]; then
-    if ! [[ -d /lib/modules/$kernel ]] && [[ $no_kernel != yes ]]; then
-        printf -- "Kernel version $kernel has no module directory /lib/modules/$kernel\n" >&2
-    fi
-fi
-
 if ! [[ $outfile ]]; then
     [[ -f /etc/machine-id ]] && read MACHINE_ID < /etc/machine-id
 
@@ -889,6 +883,12 @@ else
     printf "%s\n" "dracut: Cannot find $dracutbasedir/dracut-init.sh." >&2
     printf "%s\n" "dracut: Are you running from a git checkout?" >&2
     printf "%s\n" "dracut: Try passing -l as an argument to $dracut_cmd" >&2
+    exit 1
+fi
+
+if [[ $no_kernel != yes ]] && ! [[ -d $srcmods ]]; then
+    printf "%s\n" "dracut: Cannot find module directory $srcmods" >&2
+    printf "%s\n" "dracut: and --no-kernel was not specified" >&2
     exit 1
 fi
 
