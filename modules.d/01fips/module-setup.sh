@@ -24,6 +24,7 @@ installkernel() {
     _fipsmodules+="cast6_generic cast5_generic cast_common sha512_ssse3 serpent_sse2_x86_64 serpent_generic twofish_generic "
     _fipsmodules+="ablk_helper cryptd twofish_x86_64_3way lrw glue_helper twofish_x86_64 twofish_common blowfish_generic "
     _fipsmodules+="blowfish_x86_64 blowfish_common des_generic cbc "
+    _fipsmodules+="algif_hash af_alg crypto_user "
 
     mkdir -m 0755 -p "${initdir}/etc/modprobe.d"
 
@@ -54,9 +55,18 @@ install() {
         .libgcrypt.so.20.hmac \
         libfreeblpriv3.so libfreeblpriv3.chk
 
+    if [ -f /usr/lib64/libkcapi/.fipscheck.hmac ]; then
+        inst_simple /usr/lib64/libkcapi/.fipscheck.hmac
+        inst_simple /usr/lib64/libkcapi/fipscheck
+    else
+        inst_simple /usr/lib/libkcapi/.fipscheck.hmac
+        inst_simple /usr/lib/libkcapi/fipscheck
+    fi
+
     # we do not use prelink at SUSE
     #inst_multiple -o prelink
 
     inst_simple /etc/system-fips
+
 }
 
