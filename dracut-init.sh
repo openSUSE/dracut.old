@@ -1137,7 +1137,7 @@ instmods() {
                     return 0
                 fi
 
-                if grep -q "/${_mod}.ko" /lib/modules/$kernel/modules.builtin; then
+                if grep -q "/${_mod}.ko" $srcmods/modules.builtin; then
                     # Module is built-in
                     return 0
                 fi
