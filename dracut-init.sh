@@ -1137,7 +1137,7 @@ instmods() {
                     return 0
                 fi
 
-                if grep -q "/${_mod}.ko" $srcmods/modules.builtin; then
+                if [[ ${_mod} != crc32 ]] && grep -q "/${_mod}.ko" $srcmods/modules.builtin; then
                     # Module is built-in
                     return 0
                 fi
