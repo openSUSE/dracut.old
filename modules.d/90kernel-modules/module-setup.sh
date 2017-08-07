@@ -3,28 +3,6 @@
 # called by dracut
 installkernel() {
     if [[ -z $drivers ]]; then
-        # modules with symbols might have abstractions that depend on them, so let's add those
-        add_rev_deps() {
-            local _module
-            local _line
-            [[ -f "$srcmods/modules.dep" ]] || return 0
-            while read _module; do
-                local _mod
-                local _deps
-                _module=${_module##$srcmods/}
-                printf "%s\n" "$_module"
-                egrep ".*:.*$_module.*" $srcmods/modules.dep | (
-                    local _OLDIFS=$IFS
-                    IFS=:
-                    while read _mod _deps; do
-                        printf "%s\n" "$srcmods/$_mod"
-                    done
-                    IFS=$_OLDIFS
-                )
-            done | sort -u
-            return 0
-        }
-
         block_module_filter() {
             local _blockfuncs='ahci_platform_get_resources|ata_scsi_ioctl|scsi_add_host|blk_cleanup_queue|register_mtd_blktrans|scsi_esp_register|register_virtio_device|usb_stor_disconnect|mmc_add_host|sdhci_add_host'
             # subfunctions inherit following FDs
@@ -90,7 +68,11 @@ installkernel() {
         instmods virtio virtio_blk virtio_ring virtio_pci virtio_scsi \
             "=drivers/pcmcia" =ide "=drivers/usb/storage"
 
-        find_kernel_modules | block_module_filter | add_rev_deps | instmods
+        find_kernel_modules  |  block_module_filter  |  instmods
+
+	# modules that will fail block_module_filter because their implementation
+	# is spread over multiple modules (bsc#1034597)
+	instmods hisi_sas_v1_hw hisi_sas_v2_hw # symbols in dep hisi_sas_main
 
         # if not on hostonly mode, install all known filesystems,
         # if the required list is not set via the filesystems variable
