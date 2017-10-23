@@ -38,6 +38,7 @@ install() {
         60-pcmcia.rules \
         60-persistent-storage.rules \
         61-persistent-storage-edd.rules \
+        70-persistent-net.rules \
         70-uaccess.rules \
         71-seat.rules \
         73-seat-late.rules \
