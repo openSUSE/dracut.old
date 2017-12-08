@@ -497,6 +497,19 @@ if [ -z "$ip" ]; then
     fi
 fi
 
+bring_online() {
+    > /tmp/net.${netif}.up
+
+    if [ -e /sys/class/net/${netif}/address ]; then
+        > /tmp/net.$(cat /sys/class/net/${netif}/address).up
+    fi
+
+    setup_net $netif
+    source_hook initqueue/online $netif
+    if [ -z "$manualup" ]; then
+        /sbin/netroot $netif
+    fi
+}
 
 # Specific configuration, spin through the kernel command line
 # looking for ip= lines
@@ -555,17 +568,7 @@ for p in $(getargs ip=); do
     done
 
     if [ $? -eq 0 ]; then
-        > /tmp/net.${netif}.up
-
-        if [ -e /sys/class/net/${netif}/address ]; then
-            > /tmp/net.$(cat /sys/class/net/${netif}/address).up
-        fi
-
-        setup_net $netif
-        source_hook initqueue/online $netif
-        if [ -z "$manualup" ]; then
-            /sbin/netroot $netif
-        fi
+        bring_online
     fi
 done
 
@@ -592,6 +595,9 @@ if [ ! -e /tmp/net.${netif}.up ]; then
         if getargs 'ip=dhcp'; then
             do_dhcp -4
         fi
+    fi
+    if [ $? -eq 0 ]; then
+        bring_online
     fi
 fi
 
