@@ -7,7 +7,7 @@ WICKED_EXT_PATH="/etc/wicked/extensions"
 check() {
     local _program
 
-    require_binaries ip arping $WICKEDD_DHCP_PATH/wickedd-dhcp4 $WICKEDD_DHCP_PATH/wickedd-dhcp6 || return 1
+    require_binaries ip $WICKEDD_DHCP_PATH/wickedd-dhcp4 $WICKEDD_DHCP_PATH/wickedd-dhcp6 || return 1
 
     return 255
 }
@@ -33,8 +33,8 @@ installkernel() {
 # called by dracut
 install() {
     local _arch _i _dir
-    inst_multiple ip arping hostname sed
-    inst_multiple -o ping ping6
+    inst_multiple ip hostname sed
+    inst_multiple -o arping ping ping6
     inst_multiple -o brctl
     inst_multiple -o teamd teamdctl teamnl
     inst_simple /etc/libnl/classid

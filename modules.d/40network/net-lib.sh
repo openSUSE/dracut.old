@@ -199,6 +199,10 @@ setup_net() {
         read layer2 < /sys/class/net/$netif/device/layer2
     fi
 
+    if ! which arping > /dev/null 2>&1 ; then
+        layer2=0
+    fi
+
     if [ "$layer2" != "0" ] && [ -n "$dest" ] && ! strstr "$dest" ":"; then
         arping -q -f -w 60 -I $netif $dest || info "Resolving $dest via ARP on $netif failed"
     fi

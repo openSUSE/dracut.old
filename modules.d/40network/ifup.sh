@@ -329,7 +329,7 @@ if strglobin $ip '*:*:*'; then
         wait_for_ipv6_dad $netif
         [ "$gw" = "::" ] && gw=""
     else
-        if ! arping -f -q -D -c 2 -I $netif $ip; then
+        if which arping > /dev/null 2>&1 -a ! arping -f -q -D -c 2 -I $netif $ip; then
             warn "Duplicate address detected for $ip for interface $netif."
             return 1
         fi

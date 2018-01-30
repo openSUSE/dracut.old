@@ -113,6 +113,9 @@ case $reason in
         if [ -f /sys/class/net/$netif/device/layer2 ]; then
             read layer2 < /sys/class/net/$netif/device/layer2
         fi
+        if ! which arping > /dev/null 2>&1 ; then
+            layer2=0
+        fi
         if [ "$layer2" != "0" ]; then
             if ! arping -f -q -D -c 2 -I $netif $new_ip_address ; then
                 warn "Duplicate address detected for $new_ip_address while doing dhcp. retrying"
