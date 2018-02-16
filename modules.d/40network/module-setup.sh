@@ -1,13 +1,12 @@
 #!/bin/bash
 
-WICKEDD_DHCP_PATH="/usr/lib/wicked/bin"
 WICKED_EXT_PATH="/etc/wicked/extensions"
 
 # called by dracut
 check() {
     local _program
 
-    require_binaries ip $WICKEDD_DHCP_PATH/wickedd-dhcp4 $WICKEDD_DHCP_PATH/wickedd-dhcp6 || return 1
+    require_binaries ip wicked || return 1
 
     return 255
 }
@@ -34,11 +33,10 @@ installkernel() {
 install() {
     local _arch _i _dir
     inst_multiple ip hostname sed
-    inst_multiple -o arping ping ping6
+    inst_multiple ping ping6
     inst_multiple -o teamd teamdctl teamnl
+    inst_multiple wicked
     inst_simple /etc/libnl/classid
-    inst_simple "$WICKEDD_DHCP_PATH/wickedd-dhcp4" "/usr/sbin/wickedd-dhcp4"
-    inst_simple "$WICKEDD_DHCP_PATH/wickedd-dhcp6" "/usr/sbin/wickedd-dhcp6"
     inst_libdir_file "libwicked*.so.*"
     inst_libdir_file "libdbus-1.so.*"
     inst_script "$moddir/ifup.sh" "/sbin/ifup"

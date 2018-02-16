@@ -199,12 +199,16 @@ setup_net() {
         read layer2 < /sys/class/net/$netif/device/layer2
     fi
 
-    if ! which arping > /dev/null 2>&1 ; then
-        layer2=0
-    fi
-
     if [ "$layer2" != "0" ] && [ -n "$dest" ] && ! strstr "$dest" ":"; then
-        arping -q -f -w 60 -I $netif $dest || info "Resolving $dest via ARP on $netif failed"
+        wicked arp ping --interval 3000 --replies 1 --timeout 60000 --quiet $netif $dest 2>/dev/null
+        case "$?" in
+            0)
+                # Everything is ok
+                ;;
+            *)
+                info "Resolving $dest via ARP on $netif failed"
+                ;;
+        esac
     fi
     unset layer2
 

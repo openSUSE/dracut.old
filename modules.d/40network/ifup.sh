@@ -214,9 +214,9 @@ do_dhcp() {
         else
             ipv6_mode="managed"
         fi
-        dhclient="wickedd-dhcp6 --test --test-mode $ipv6_mode"
+        dhclient="wicked test dhcp6"
     else
-        dhclient="wickedd-dhcp4 --test"
+        dhclient="wicked test dhcp4"
     fi
 
     if ! linkup $netif; then
@@ -229,9 +229,8 @@ do_dhcp() {
         [ -n "$mtu" ] && ip $1 link set mtu $mtu dev $netif
     fi
 
-    $dhclient --test-format leaseinfo --test-output /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} --test-request - $netif << EOF
-<request type="lease"/>
-EOF
+    echo '<request type="lease"/>' > /tmp/request.${netif}.dhcp.ipv${1:1:1}
+    $dhclient --format leaseinfo --output /tmp/leaseinfo.${netif}.dhcp.ipv${1:1:1} --request /tmp/request.${netif}.dhcp.ipv${1:1:1} $netif
     dhcp_apply $1 || return $?
 
     if [ "$1" = "-6" ] ; then
@@ -329,10 +328,18 @@ if strglobin $ip '*:*:*'; then
         wait_for_ipv6_dad $netif
         [ "$gw" = "::" ] && gw=""
     else
-        if which arping > /dev/null 2>&1 -a ! arping -f -q -D -c 2 -I $netif $ip; then
-            warn "Duplicate address detected for $ip for interface $netif."
-            return 1
-        fi
+        wicked arp verify --quiet $netif $ip 2>/dev/null
+        case "$?" in
+            1)
+                info "$netif does not support ARP, cannot attempt to resolve $dest."
+                ;;
+            4)
+                warn "Duplicate address detected for $ip for interface $netif."
+                return 1
+                ;;
+            *)
+                ;;
+        esac
         # Assume /24 prefix for IPv4
         [ -z "$prefix" ] && prefix=24
         ip addr add $ip/$prefix ${srv:+peer $srv} brd + dev $netif
