@@ -35,7 +35,6 @@ install() {
     local _arch _i _dir
     inst_multiple ip hostname sed
     inst_multiple -o arping ping ping6
-    inst_multiple -o brctl
     inst_multiple -o teamd teamdctl teamnl
     inst_simple /etc/libnl/classid
     inst_simple "$WICKEDD_DHCP_PATH/wickedd-dhcp4" "/usr/sbin/wickedd-dhcp4"

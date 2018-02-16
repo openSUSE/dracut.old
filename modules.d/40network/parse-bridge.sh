@@ -10,11 +10,6 @@
 # return if bridge already parsed
 [ -n "$bridgename" ] && return
 
-# Check if bridge parameter is valid
-if getarg bridge= >/dev/null ; then
-    command -v brctl >/dev/null 2>&1 || die "No 'brctl' installed" 
-fi
-
 parsebridge() {
     local v=${1}:
     set --

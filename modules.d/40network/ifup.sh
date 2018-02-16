@@ -440,8 +440,8 @@ if [ -e /tmp/bridge.info ]; then
     . /tmp/bridge.info
 # start bridge if necessary
     if [ "$netif" = "$bridgename" ] && [ ! -e /tmp/net.$bridgename.up ]; then
-        brctl addbr $bridgename
-        brctl setfd $bridgename 0
+        ip link add name $bridgename type bridge forward_delay 0
+        ip link set dev $bridgename up
         for ethname in $bridgeslaves ; do
             if [ "$ethname" = "$bondname" ] ; then
                 DO_BOND_SETUP=yes ifup $bondname -m
@@ -452,7 +452,7 @@ if [ -e /tmp/bridge.info ]; then
             else
                 linkup $ethname
             fi
-            brctl addif $bridgename $ethname
+            ip link set dev $ethname master $bridgename
         done
     fi
 fi
