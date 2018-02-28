@@ -61,6 +61,7 @@ install() {
         inst_multiple /etc/sysconfig/network/ifcfg-*
         inst_multiple -o /etc/sysconfig/network/ifroute-*
         inst_simple /etc/sysconfig/network/routes
+        inst_multiple -o /var/lib/wicked/duid.xml /var/lib/wicked/iaid.xml
     }
 
     inst_libdir_file {"tls/$_arch/",tls/,"$_arch/",}"libnss_dns.so.*" \
