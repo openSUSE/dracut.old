@@ -45,6 +45,8 @@ installkernel() {
         # ensure early availability for e.g. emmc phys
         instmods "=drivers/phy"
 
+        instmods "=drivers/pci/host"
+
         instmods \
             "=drivers/hid" \
             "=drivers/input/serio" \
