@@ -123,6 +123,7 @@ dhcp_apply() {
     # Assign provided routers
     local g
     if [ -n "${GATEWAYS}" ]; then
+        gw="${GATEWAYS%% *}"
         for g in ${GATEWAYS}; do
             ip $1 route add default via "$g" dev "$INTERFACE" && break
         done
