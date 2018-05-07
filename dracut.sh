@@ -1210,7 +1210,7 @@ if [[ $hostonly ]]; then
 
             push_host_devs "$_dev"
             if [[ "$_t" == btrfs ]]; then
-                for i in $(find_btrfs_devs "$_m"); do
+                for i in $(btrfs_devs "$_m"); do
                     push_host_devs "$i"
                 done
             fi
