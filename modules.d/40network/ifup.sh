@@ -275,7 +275,7 @@ do_ifcfg() {
             dhcp*)
                 do_dhcp -4 ;;
             *)
-                do_static ;;
+                ;;
         esac
         # loop over all configurations in ifcfg-$netif (IPADDR*) and apply
         for conf in ${!IPADDR@}; do
