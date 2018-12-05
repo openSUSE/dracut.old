@@ -17,20 +17,26 @@ source_hook "$hook"
 
 if getargbool 1 rd.shell -d -y rdshell || getarg rd.break -d rdbreak; then
     FSTXT="/usr/share/fsck/fsck_help_$fstype.txt"
+    RDSOSREPORT="$(rdsosreport)"
     echo
-    rdsosreport
-    echo
-    echo
-    echo 'Entering emergency mode. Exit the shell to continue.'
-    echo 'Type "journalctl" to view system logs.'
-    echo 'You might want to save "/run/initramfs/rdsosreport.txt" to a USB stick or /boot'
-    echo 'after mounting them and attach it to a bug report.'
-    echo
-    echo
-    [ -f $FSTXT ] && cat $FSTXT
+    while read _tty rest; do
+        (
+            echo
+            echo $RDSOSREPORT
+            echo
+            echo
+            echo 'Entering emergency mode. Exit the shell to continue.'
+            echo 'Type "journalctl" to view system logs.'
+            echo 'You might want to save "/run/initramfs/rdsosreport.txt" to a USB stick or /boot'
+            echo 'after mounting them and attach it to a bug report.'
+            echo
+            echo
+            [ -f "$FSTXT" ] && cat "$FSTXT"
+        ) > /dev/$_tty
+    done < /dev/consoles
     [ -f /etc/profile ] && . /etc/profile
     [ -z "$PS1" ] && export PS1="$_name:\${PWD}# "
-    exec sh -i -l
+    exec sulogin -e
 else
     warn "$action has failed. To debug this issue add \"rd.shell rd.debug\" to the kernel command line."
     exit 1

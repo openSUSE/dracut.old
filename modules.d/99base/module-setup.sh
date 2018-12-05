@@ -26,9 +26,13 @@ install() {
         (ln -s bash "${initdir}/bin/sh" || :)
     fi
 
-    #add common users in /etc/passwd, it will be used by nfs/ssh currently
-    egrep '^root:' "$initdir/etc/passwd" 2>/dev/null || echo  'root:x:0:0::/root:/bin/sh' >> "$initdir/etc/passwd"
-    egrep '^nobody:' /etc/passwd >> "$initdir/etc/passwd"
+    # add common users in /etc/passwd, it will be used by nfs/ssh currently
+    # use password for hostonly images to facilitate secure sulogin in emergency console
+    [[ $hostonly ]] && pwshadow='x'
+    grep '^root:' "$initdir/etc/passwd" 2>/dev/null || echo  "root:$pwshadow:0:0::/root:/bin/sh" >> "$initdir/etc/passwd"
+     grep '^nobody:' /etc/passwd >> "$initdir/etc/passwd"
+
+    [[ $hostonly ]] && grep '^root:' /etc/shadow >> "$initdir/etc/shadow"
 
     # install our scripts and hooks
     inst_script "$moddir/init.sh" "/init"
