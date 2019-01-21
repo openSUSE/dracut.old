@@ -5,6 +5,9 @@ installkernel() {
     if [[ -z $drivers ]]; then
         block_module_filter() {
             local _blockfuncs='ahci_platform_get_resources|ata_scsi_ioctl|scsi_add_host|blk_cleanup_queue|register_mtd_blktrans|scsi_esp_register|register_virtio_device|usb_stor_disconnect|mmc_add_host|sdhci_add_host'
+            if [[ "$(uname -m)" == arm* || "$(uname -m)" == aarch64 ]]; then
+                _blockfuncs+='|dw_mc_probe|dw_mci_pltfm_register'
+            fi
             # subfunctions inherit following FDs
             local _merge=8 _side2=9
             function bmf1() {
@@ -59,7 +62,6 @@ installkernel() {
 
         if [[ "$(uname -m)" == arm* || "$(uname -m)" == aarch64 ]]; then
             # arm/aarch64 specific modules
-            _blockfuncs+='|dw_mc_probe|dw_mci_pltfm_register'
             instmods \
                 "=drivers/clk" \
                 "=drivers/dma" \
