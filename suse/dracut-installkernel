@@ -4,11 +4,8 @@
 #
 # May 21, 2003 - agruen@suse.de
 # * Adapted for SuSE and cleaned up.
-#
-# This file is kept in the following CVS repository:
-#
-# $Source: /suse/yast2/cvsroot/mkinitrd/installkernel,v $
-# $Revision: 1.8 $
+# November 21, 2018 - jdelvare@suse.de
+# * Stop creating .old files.
 #
 
 : ${INSTALL_PATH:=/boot}
@@ -34,40 +31,6 @@ case "$(uname -m)" in
         BOOTFILE=vmlinuz
         ;;
 esac
-
-#
-# Move away files from versions up to SuSE Linux 8.2
-#
-
-if [ -f $INSTALL_PATH/$BOOTFILE -a ! -L $INSTALL_PATH/$BOOTFILE ]; then
-    mv $INSTALL_PATH/$BOOTFILE $INSTALL_PATH/$BOOTFILE.old
-fi
-
-if [ -L $INSTALL_PATH/System.map ]; then
-    rm -f $INSTALL_PATH/System.map
-elif [ -f $INSTALLPATH/System.map ]; then
-    mv $INSTALL_PATH/System.map $INSTALL_PATH/System.map.old
-fi
-
-#
-# Move away files from after SuSE Linux 8.2
-#
-
-if [ -f $INSTALL_PATH/$BOOTFILE-$KERNEL_VERSION ]; then
-    mv $INSTALL_PATH/$BOOTFILE-$KERNEL_VERSION \
-        $INSTALL_PATH/$BOOTFILE-$KERNEL_VERSION.old;
-fi
-
-if [ -f $INSTALL_PATH/System.map-$KERNEL_VERSION ]; then
-    mv $INSTALL_PATH/System.map-$KERNEL_VERSION \
-        $INSTALL_PATH/System.map-$KERNEL_VERSION.old; 
-fi
-
-
-if [ -f .config ] && [ -f $INSTALL_PATH/$CONFIGFILE ]; then
-    mv -v $INSTALL_PATH/$CONFIGFILE \
-        $INSTALL_PATH/$CONFIGFILE.old;
-fi
 
 #
 # Install new files
@@ -121,10 +84,6 @@ case "$(uname -m)" in
 i?86 | x86_64)
     KERNBIN=$(dirname $MAPFILE)/vmlinux
     if [ -e $KERNBIN ]; then
-        if [ -f $INSTALL_PATH/vmlinux-$KERNEL_VERSION.gz ]; then
-            mv $INSTALL_PATH/vmlinux-$KERNEL_VERSION.gz \
-                $INSTALL_PATH/vmlinux-$KERNEL_VERSION.gz.old;
-        fi
         gzip -c $KERNBIN > $INSTALL_PATH/vmlinux-$KERNEL_VERSION.gz
     fi
     ;;
