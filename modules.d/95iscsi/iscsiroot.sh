@@ -228,20 +228,26 @@ handle_netroot()
                 $(iscsiadm -m iface -I $iscsi_iface_name --op=new)
                 [ -n "$iscsi_initiator" ] && $(iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.initiatorname --value=$iscsi_initiator)
                 [ -n "$iscsi_netdev_name" ] && $(iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.net_ifacename --value=$iscsi_netdev_name)
-                COMMAND="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} -I $iscsi_iface_name --op=update"
+                CMD="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} -I $iscsi_iface_name"
             else
-                COMMAND="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} --op=update"
+                CMD="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port}"
             fi
-            $($COMMAND --name=node.startup --value=onboot)
-            [ -n "$iscsi_username" ] && $($COMMAND --name=node.session.auth.username --value=$iscsi_username)
-            [ -n "$iscsi_password" ] && $($COMMAND --name=node.session.auth.password --value=$iscsi_password)
-            [ -n "$iscsi_in_username" ] && $($COMMAND --name=node.session.auth.username_in --value=$iscsi_in_username)
-            [ -n "$iscsi_in_password" ] && $($COMMAND --name=node.session.auth.password_in --value=$iscsi_in_password)
-            [ -n "$iscsi_param" ] && for param in $iscsi_param; do $($COMMAND --name=${param%=*} --value=${param#*=}); done
+            UPDT="$CMD --op=update"
+            $UPDT --name=node.startup --value=onboot
+            [ -n "$iscsi_username" ] && $UPDT --name=node.session.auth.username --value=$iscsi_username
+            [ -n "$iscsi_password" ] && $UPDT --name=node.session.auth.password --value=$iscsi_password
+            [ -n "$iscsi_in_username" ] && $UPDT --name=node.session.auth.username_in --value=$iscsi_in_username
+            [ -n "$iscsi_in_password" ] && $UPDT --name=node.session.auth.password_in --value=$iscsi_in_password
+            [ -n "$iscsi_param" ] && for param in $iscsi_param; do $UPDT --name=${param%=*} --value=${param#*=}; done
+            if [ "$netif" != "timeout" ]; then
+                $CMD --login
+            fi
         fi
     done
 
-    iscsiadm -m node -L onboot || :
+    if [ "$netif" = timeout ]; then
+        iscsiadm -m node -L onboot || :
+    fi
     > $hookdir/initqueue/work
 
     netroot_enc=$(str_replace "$1" '/' '\2f')
