@@ -232,16 +232,32 @@ handle_netroot()
             else
                 COMMAND="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} --op=update"
             fi
-            $($COMMAND --name=node.startup --value=onboot)
-            [ -n "$iscsi_username" ] && $($COMMAND --name=node.session.auth.username --value=$iscsi_username)
-            [ -n "$iscsi_password" ] && $($COMMAND --name=node.session.auth.password --value=$iscsi_password)
-            [ -n "$iscsi_in_username" ] && $($COMMAND --name=node.session.auth.username_in --value=$iscsi_in_username)
-            [ -n "$iscsi_in_password" ] && $($COMMAND --name=node.session.auth.password_in --value=$iscsi_in_password)
-            [ -n "$iscsi_param" ] && for param in $iscsi_param; do $($COMMAND --name=${param%=*} --value=${param#*=}); done
-        fi
+            [ -n "$iscsi_param" ] && for param in $iscsi_param; do EXTRA="$EXTRA --name=${param%=*} --value=${param#*=}"; done
+
+            CMD="iscsiadm -m node -T $target \
+                     ${iscsi_iface_name:+-I $iscsi_iface_name} \
+                     -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} \
+                     --op=update \
+                     --name=node.startup --value=onboot \
+                     ${iscsi_username:+   --name=node.session.auth.username    --value=$iscsi_username} \
+                     ${iscsi_password:+   --name=node.session.auth.password    --value=$iscsi_password} \
+                     ${iscsi_in_username:+--name=node.session.auth.username_in --value=$iscsi_in_username} \
+                     ${iscsi_in_password:+--name=node.session.auth.password_in --value=$iscsi_in_password} \
+                     $EXTRA \
+                     $NULL"
+            $CMD
+            if [ "$netif" != "timeout" ]; then
+                $CMD --login
+            fi
+        ;;
+        *)
+        ;;
+        esac
     done
 
-    iscsiadm -m node -L onboot || :
+    if [ "$netif" = "timeout" ]; then
+        iscsiadm -m node -L onboot || :
+    fi
     > $hookdir/initqueue/work
 
     netroot_enc=$(str_replace "$1" '/' '\2f')
