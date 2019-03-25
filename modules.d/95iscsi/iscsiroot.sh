@@ -213,7 +213,7 @@ handle_netroot()
 
     ### ToDo: Upstream calls systemd-run - Shall we, do we have to port this?
 
-    if iscsiadm -m node; then
+    if iscsiadm -m node --op show >/dev/null 2>&1; then
         targets=$(iscsiadm -m node | sed 's/^.*iqn/iqn/')
     else
         targets=$(iscsiadm -m discovery -t st -p $iscsi_target_ip:${iscsi_target_port:+$iscsi_target_port} | sed 's/^.*iqn/iqn/')
