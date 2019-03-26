@@ -86,8 +86,13 @@ install_iscsiroot() {
     iscsi_host=${host##*/}
 
     for flash in ${host}/flashnode_sess-* ; do
-        is_boot=$(cat $flash/is_boot_target)
-        if [ $is_boot -eq 1 ] ; then
+	is_boot="0"
+	if [[ -d "$flash" ]]; then
+	    if [[ -r "$flash/is_boot_target" ]]; then
+		is_boot=$(cat $flash/is_boot_target)
+	    fi
+	fi
+        if [[ "$is_boot" -eq 1 ]]; then
             # qla4xxx flashnode session; skip iBFT discovery
             iscsi_initiator=$(cat /sys/class/iscsi_host/${iscsi_host}/initiatorname)
             echo "rd.iscsi.initiator=${iscsi_initiator}"
