@@ -222,9 +222,9 @@ handle_netroot()
     for target in $targets; do
         if [ "$target" = "$iscsi_target_name" ]; then
             if [ -n "$iscsi_iface_name" ]; then
-                $(iscsiadm -m iface -I $iscsi_iface_name --op=new)
-                [ -n "$iscsi_initiator" ] && $(iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.initiatorname --value=$iscsi_initiator)
-                [ -n "$iscsi_netdev_name" ] && $(iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.net_ifacename --value=$iscsi_netdev_name)
+                iscsiadm -m iface -I $iscsi_iface_name --op=new
+                [ -n "$iscsi_initiator" ] && iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.initiatorname --value=$iscsi_initiator
+                [ -n "$iscsi_netdev_name" ] && iscsiadm -m iface -I $iscsi_iface_name --op=update --name=iface.net_ifacename --value=$iscsi_netdev_name
                 CMD="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port} -I $iscsi_iface_name"
             else
                 CMD="iscsiadm -m node -T $target -p $iscsi_target_ip${iscsi_target_port:+:$iscsi_target_port}"
