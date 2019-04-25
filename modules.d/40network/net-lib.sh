@@ -129,7 +129,7 @@ setup_net() {
     for _p in $(getargs rd.route); do
         route_to_var "$_p" || continue
         [ -n "$route_dev" ] && [ "$route_dev" != "$netif" ] && continue
-        ip route add "$route_mask" ${route_gw:+via "$route_gw"} ${route_dev:+dev "$route_dev"}
+        ip route add "$route_mask" ${route_gw:+via $route_gw} ${route_dev:+dev $route_dev}
         if strstr "$route_mask" ":"; then
             printf -- "%s\n" "$route_mask ${route_gw:+via $route_gw} ${route_dev:+dev $route_dev}" \
                 > /tmp/net.route6."$netif"
@@ -747,6 +747,13 @@ iface_has_carrier() {
 
 iface_has_link() {
     iface_has_carrier "$@"
+}
+
+iface_is_enslaved() {
+    local _li
+    _li=$(ip -o link show dev $1)
+    strstr "$li" " master " || return 1
+    return 0
 }
 
 find_iface_with_link() {

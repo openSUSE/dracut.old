@@ -4,7 +4,7 @@
 check() {
     local _rootdev
     # If our prerequisites are not met, fail anyways.
-    require_binaries hostname iscsi-iname iscsiadm iscsid || return 1
+    require_binaries iscsi-iname iscsiadm iscsid || return 1
 
     # If hostonly was requested, fail the check if we are not actually
     # booting from root.
@@ -22,8 +22,10 @@ check() {
 
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         pushd . >/dev/null
-        for_each_host_dev_and_slaves is_iscsi || return 255
+        for_each_host_dev_and_slaves is_iscsi
+        local _is_iscsi=$?
         popd >/dev/null
+        [[ $_is_iscsi == 0 ]] || return 255
     }
     return 0
 }
@@ -86,6 +88,7 @@ install_iscsiroot() {
     iscsi_host=${host##*/}
 
     for flash in ${host}/flashnode_sess-* ; do
+        [ ! -e "$flash/is_boot_target" ] && continue
         is_boot=$(cat $flash/is_boot_target)
         if [ $is_boot -eq 1 ] ; then
             # qla4xxx flashnode session; skip iBFT discovery
@@ -206,7 +209,7 @@ cmdline() {
 install() {
     inst_multiple -o iscsiuio
     inst_libdir_file 'libgcc_s.so*'
-    inst_multiple umount hostname iscsi-iname iscsiadm iscsid
+    inst_multiple umount iscsi-iname iscsiadm iscsid
 
     inst_multiple -o \
         $systemdsystemunitdir/iscsid.socket \
@@ -265,6 +268,23 @@ install() {
             echo "After=dracut-cmdline.service"
             echo "Before=dracut-initqueue.service"
         ) > "${initdir}/$systemdsystemunitdir/iscsid.service.d/dracut.conf"
+
+        # The iscsi deamon does not need to wait for any storage inside initrd
+        mkdir -p "${initdir}/$systemdsystemunitdir/iscsid.socket.d"
+        (
+            echo "[Unit]"
+            echo "DefaultDependencies=no"
+            echo "Conflicts=shutdown.target"
+            echo "Before=shutdown.target sockets.target"
+        ) > "${initdir}/$systemdsystemunitdir/iscsid.socket.d/dracut.conf"
+        mkdir -p "${initdir}/$systemdsystemunitdir/iscsiuio.socket.d"
+        (
+            echo "[Unit]"
+            echo "DefaultDependencies=no"
+            echo "Conflicts=shutdown.target"
+            echo "Before=shutdown.target sockets.target"
+        ) > "${initdir}/$systemdsystemunitdir/iscsiuio.socket.d/dracut.conf"
+
     fi
     inst_dir /var/lib/iscsi
     dracut_need_initqueue

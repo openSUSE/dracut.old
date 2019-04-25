@@ -24,7 +24,7 @@ debug_on() {
 
 # returns OK if $1 contains literal string $2 (and isn't empty)
 strstr() {
-    [ "${1##*"$2"*}" != "$1" ]
+    [ "${1##*$2*}" != "$1" ]
 }
 
 # returns OK if $1 matches (completely) glob pattern $2
@@ -43,18 +43,18 @@ strglobin() {
 
 # returns OK if $1 contains literal string $2 at the beginning, and isn't empty
 str_starts() {
-    [ "${1#"$2"*}" != "$1" ]
+    [ "${1#$2*}" != "$1" ]
 }
 
 # returns OK if $1 contains literal string $2 at the end, and isn't empty
 str_ends() {
-    [ "${1%*"$2"}" != "$1" ]
+    [ "${1%*$2}" != "$1" ]
 }
 
 trim() {
     local var="$*"
-    var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
-    var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
+    var="${var#${var%%[![:space:]]*}}"   # remove leading whitespace characters
+    var="${var%${var##*[![:space:]]}}"   # remove trailing whitespace characters
     printf "%s" "$var"
 }
 
@@ -108,9 +108,9 @@ str_replace() {
     local out=''
 
     while strstr "${in}" "$s"; do
-        chop="${in%%"$s"*}"
+        chop="${in%%$s*}"
         out="${out}${chop}$r"
-        in="${in#*"$s"}"
+        in="${in#*$s}"
     done
     echo "${out}${in}"
 }
@@ -396,7 +396,7 @@ splitsep() {
     while [ -n "$str" -a "$#" -gt 1 ]; do
         tmp="${str%%$sep*}"
         eval "$1='${tmp}'"
-        str="${str#"$tmp"}"
+        str="${str#$tmp}"
         str="${str#$sep}"
         shift
     done
@@ -620,7 +620,7 @@ nfsroot_to_var() {
 # prints:
 #   ENV{ID_FS_LABEL}="boot"
 #
-# TOOD: symlinks
+# TODO: symlinks
 udevmatch() {
     case "$1" in
     UUID=????????-????-????-????-????????????|LABEL=*|PARTLABEL=*|PARTUUID=????????-????-????-????-????????????)
@@ -1327,7 +1327,7 @@ show_memstats()
 remove_hostonly_files() {
     rm -fr /etc/cmdline /etc/cmdline.d/*.conf "$hookdir/initqueue/finished"
     if [ -f /lib/dracut/hostonly-files ]; then
-        while read line || [ -n "$line" ]; do
+        while read -r line || [ -n "$line" ]; do
             [ -e "$line" ] || [ -h "$line" ] || continue
             rm -f "$line"
         done < /lib/dracut/hostonly-files

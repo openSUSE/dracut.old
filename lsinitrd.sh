@@ -102,7 +102,7 @@ else
         && [[ -d /boot/${MACHINE_ID} || -L /boot/${MACHINE_ID} ]] ; then
         image="/boot/${MACHINE_ID}/${KERNEL_VERSION}/initrd"
     else
-        image="/boot/initramfs-${KERNEL_VERSION}.img"
+        image="/boot/initrd-${KERNEL_VERSION}"
     fi
 fi
 
@@ -158,6 +158,21 @@ list_files()
     fi
     ((ret+=$?))
     echo "========================================================================"
+}
+
+list_squash_content()
+{
+    SQUASH_IMG="squash/root.img"
+    SQUASH_TMPFILE="$(mktemp -t --suffix=.root.sqsh lsinitrd.XXXXXX)"
+    trap "rm -f '$SQUASH_TMPFILE'" EXIT
+    $CAT "$image" 2>/dev/null | cpio --extract --verbose --quiet --to-stdout -- \
+        $SQUASH_IMG > "$SQUASH_TMPFILE" 2>/dev/null
+    if [[ -s $SQUASH_TMPFILE ]]; then
+        echo "Squashed content ($SQUASH_IMG):"
+        echo "========================================================================"
+        unsquashfs -ll "$SQUASH_TMPFILE" | tail -n +4
+        echo "========================================================================"
+    fi
 }
 
 unpack_files()
@@ -287,6 +302,7 @@ else
         echo
         list_modules
         list_files
+        list_squash_content
     fi
 fi
 

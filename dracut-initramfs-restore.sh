@@ -19,7 +19,7 @@ mount -o ro /boot &>/dev/null || true
 if [[ $MACHINE_ID ]] && [[ -d /boot/${MACHINE_ID} || -L /boot/${MACHINE_ID} ]] ; then
     IMG="/boot/${MACHINE_ID}/${KERNEL_VERSION}/initrd"
 fi
-[[ -f $IMG ]] || IMG="/boot/initramfs-${KERNEL_VERSION}.img"
+[[ -f $IMG ]] || IMG="/boot/initrd-${KERNEL_VERSION}"
 
 cd /run/initramfs
 
@@ -38,6 +38,20 @@ else
     echo "Unpacking of $IMG to /run/initramfs failed" >&2
     rm -f -- /run/initramfs/shutdown
     exit 1
+fi
+
+if [[ -d squash ]]; then
+    unsquashfs -no-xattrs -f -d . squash/root.img >/dev/null
+    if [ $? -ne 0 ]; then
+        echo "Squash module is enabled for this initramfs but failed to unpack squash/root.img" >&2
+        rm -f -- /run/initramfs/shutdown
+        exit 1
+    fi
+fi
+
+if [ -e /etc/selinux/config -a -x /usr/sbin/setfiles ] ; then
+    . /etc/selinux/config
+    /usr/sbin/setfiles -v -r /run/initramfs /etc/selinux/${SELINUXTYPE}/contexts/files/file_contexts /run/initramfs > /dev/null
 fi
 
 exit 0

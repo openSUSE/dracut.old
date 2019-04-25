@@ -788,11 +788,11 @@ if ! [[ $outfile ]]; then
         outfile="$efidir/Linux/linux-$kernel${MACHINE_ID:+-${MACHINE_ID}}${BUILD_ID:+-${BUILD_ID}}.efi"
     else
         if [[ -e "/boot/vmlinuz-$kernel" ]]; then
-            outfile="/boot/initramfs-$kernel.img"
+            outfile="/boot/initrd-$kernel"
         elif [[ $MACHINE_ID ]] && ( [[ -d /boot/${MACHINE_ID} ]] || [[ -L /boot/${MACHINE_ID} ]] ); then
             outfile="/boot/${MACHINE_ID}/$kernel/initrd"
         else
-            outfile="/boot/initramfs-$kernel.img"
+            outfile="/boot/initrd-$kernel"
         fi
     fi
 fi
@@ -1572,7 +1572,7 @@ if [[ $kernel_only != yes ]]; then
         dinfo "*** Resolving executable dependencies ***"
         find "$initdir" -type f -perm /0111 -not -path '*.ko' -print0 \
         | xargs -r -0 $DRACUT_INSTALL ${initdir:+-D "$initdir"} -R ${DRACUT_FIPS_MODE:+-f} --
-        dinfo "*** Resolving executable dependencies done***"
+        dinfo "*** Resolving executable dependencies done ***"
     fi
 
     # Now we are done with lazy resolving, always install dependencies
@@ -1663,14 +1663,14 @@ if [[ $do_strip = yes ]] && ! [[ $DRACUT_FIPS_MODE ]]; then
     dinfo "*** Stripping files ***"
     find "$initdir" -type f \
         -executable -not -path '*/lib/modules/*.ko' -print0 \
-        | xargs -r -0 $strip_cmd -g 2>/dev/null
+        | xargs -r -0 $strip_cmd -g -p 2>/dev/null
 
     # strip kernel modules, but do not touch signed modules
     find "$initdir" -type f -path '*/lib/modules/*.ko' -print0 \
         | while read -r -d $'\0' f || [ -n "$f" ]; do
         SIG=$(tail -c 28 "$f" | tr -d '\000')
         [[ $SIG == '~Module signature appended~' ]] || { printf "%s\000" "$f"; }
-    done | xargs -r -0 $strip_cmd -g
+    done | xargs -r -0 $strip_cmd -g -p
 
     dinfo "*** Stripping files done ***"
 fi
@@ -1690,7 +1690,7 @@ if [[ $early_microcode = yes ]]; then
         for _fwdir in $fw_dir; do
             if [[ -d $_fwdir && -d $_fwdir/$_fw ]]; then
                 _src="*"
-                dinfo "*** Constructing ${ucode_dest[$idx]} ****"
+                dinfo "*** Constructing ${ucode_dest[$idx]} ***"
                 if [[ $hostonly ]]; then
                     _src=$(get_ucode_file)
                     [[ $_src ]] || break
@@ -1790,7 +1790,7 @@ if dracut_module_included "squash"; then
 
     # Move some files out side of the squash image, including:
     # - Files required to boot and mount the squashfs image
-    # - Files need to be accessable without mounting the squash image
+    # - Files need to be accessible without mounting the squash image
     required_in_root() {
         local file=$1
         local _sqsh_file=$squash_dir/$file
@@ -1849,9 +1849,7 @@ if dracut_module_included "squash"; then
     done
 
     mv $initdir/init $initdir/init.stock
-    mv $initdir/shutdown $initdir/shutdown.stock
     ln -s squash/init.sh $initdir/init
-    ln -s squash/shutdown.sh $initdir/shutdown
 
     mksquashfs $squash_dir $squash_img -comp xz -b 64K -Xdict-size 100% &> /dev/null
 
