@@ -18,6 +18,9 @@ netif=$1
 
 # loopback is always handled the same way
 if [ "$netif" = "lo" ] ; then
+    # systemd probably has already set up lo
+    ip link show dev lo >/dev/null && exit 0
+
     ip link set lo up
     ip addr add 127.0.0.1/8 dev lo
     exit 0
@@ -45,11 +48,6 @@ dhcp_wicked_apply() {
 
     # Assign IP address
     ip $1 addr add "$IPADDR" ${BROADCAST:+broadcast $BROADCAST} dev "$INTERFACE"
-
-    # Assign network route the interface is attached to
-    if [ -n "${NETWORK}" ]; then
-        ip $1 route add "$NETWORK"/"$PREFIXLEN" dev "$INTERFACE"
-    fi
 
     # Assign provided routes
     local r route=()
@@ -172,6 +170,8 @@ EOF
     if [ "$1" = "-6" ] ; then
         wait_for_ipv6_dad $netif
     fi
+
+    return 0
 }
 
 # Run dhclient
@@ -201,7 +201,7 @@ do_dhcp() {
     while [ $_COUNT -lt $_DHCPRETRY ]; do
         info "Starting dhcp for interface $netif"
         backend="$(dhcp_backend)"
-        dhcp_${backend}_run "$@"
+        dhcp_${backend}_run "$@" && return 0
         _COUNT=$(($_COUNT+1))
         [ $_COUNT -lt $_DHCPRETRY ] && sleep 1
     done
