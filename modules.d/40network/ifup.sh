@@ -349,7 +349,7 @@ if strglobin $ip '*:*:*'; then
 
     [ -n "$gw" ] && echo ip route replace default via $gw dev $netif > /tmp/net.$netif.gw
 
-    for ifroute in /etc/sysconfig/network/ifroute-${netif} /etc/sysconfig/netwrk/routes ; do
+    for ifroute in /etc/sysconfig/network/ifroute-${netif} /etc/sysconfig/network/routes ; do
         [ -e ${ifroute} ] || continue
         # Pull in existing routing configuration
         read ifr_dest ifr_gw ifr_mask ifr_if < ${ifroute}
