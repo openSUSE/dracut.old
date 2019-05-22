@@ -291,6 +291,23 @@ install() {
             echo "After=dracut-cmdline.service"
             echo "Before=dracut-initqueue.service"
         ) > "${initdir}/$systemdsystemunitdir/iscsid.service.d/dracut.conf"
+
+        # The iscsi deamon does not need to wait for any storage inside initrd
+        mkdir -p "${initdir}/$systemdsystemunitdir/iscsid.socket.d"
+        (
+            echo "[Unit]"
+            echo "DefaultDependencies=no"
+            echo "Conflicts=shutdown.target"
+            echo "Before=shutdown.target sockets.target"
+        ) > "${initdir}/$systemdsystemunitdir/iscsid.socket.d/dracut.conf"
+        mkdir -p "${initdir}/$systemdsystemunitdir/iscsiuio.socket.d"
+        (
+            echo "[Unit]"
+            echo "DefaultDependencies=no"
+            echo "Conflicts=shutdown.target"
+            echo "Before=shutdown.target sockets.target"
+        ) > "${initdir}/$systemdsystemunitdir/iscsiuio.socket.d/dracut.conf"
+
     fi
     inst_dir /var/lib/iscsi
     dracut_need_initqueue
