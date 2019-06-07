@@ -59,11 +59,6 @@ install() {
                      {"tls/$_arch/",tls/,"$_arch/",}"libnss_myhostname.so.*" \
                      {"tls/$_arch/",tls/,"$_arch/",}"libnss_resolve.so.*"
 
-
-    for i in /etc/systemd/network /usr/lib/systemd/network; do
-         inst_simple $(find /etc/systemd/network/ -type f)
-    done
-
     for i in \
         systemd-networkd-wait-online.service \
             systemd-networkd.service \
