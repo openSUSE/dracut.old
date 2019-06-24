@@ -24,7 +24,7 @@ case "$(uname -m)" in
     ppc|ppc64)
         BOOTFILE=vmlinux
         ;;
-    aarch64)
+    aarch64|riscv64)
         BOOTFILE=Image
         ;;
     armv*)
