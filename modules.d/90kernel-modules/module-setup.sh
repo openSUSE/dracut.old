@@ -42,7 +42,7 @@ installkernel() {
             ehci-hcd ehci-pci ehci-platform \
             ohci-hcd ohci-pci \
             uhci-hcd \
-            pwm-lpss pwm-lpss-platform
+            pwm-lpss pwm-lpss-platform \
             xhci-hcd xhci-pci xhci-plat-hcd \
             "=drivers/pinctrl" \
             ${NULL}
