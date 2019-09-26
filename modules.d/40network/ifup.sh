@@ -576,6 +576,11 @@ for p in $(getargs ip=); do
     done
 
     if [ $? -eq 0 ]; then
+        > /tmp/net.$netif.did-setup
+       [ -z "$DO_VLAN" ] && \
+       [ -e /sys/class/net/$netif/address ] && \
+       > /tmp/net.$(cat /sys/class/net/$netif/address).did-setup
+
         bring_online
     fi
 done
@@ -600,11 +605,11 @@ if [ ! -e /tmp/net.${netif}.up ]; then
             load_ipv6
             do_dhcp -6
         fi
-        if getargs 'ip=dhcp'; then
+        if getargs 'ip=dhcp' && [ "$autoconf" != "dhcp" ]; then
             do_dhcp -4
         fi
     fi
-    if [ $? -eq 0 ]; then
+    if [ $? -eq 0 ] && [ -f /tmp/leaseinfo.${netif}* ]; then
         bring_online
     fi
 fi
