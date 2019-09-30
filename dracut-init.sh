@@ -913,16 +913,22 @@ install_kmod_with_fw() {
     for _fw in $(modinfo -k $kernel -F firmware $1 2>/dev/null); do
         _found=''
         for _fwdir in $fw_dir; do
-            [[ -d $_fwdir && -f $_fwdir/$_fw ]] || continue
-            inst_simple "$_fwdir/$_fw" "/lib/firmware/$_fw"
+            if [[ -d $_fwdir ]]; then
+                if [[ -f $_fwdir/$_fw ]]; then
+                    inst_simple "$_fwdir/$_fw" "/lib/firmware/$_fw"
+                else
+                    [[ -f $_fwdir/$_fw.xz ]] || continue
+                    inst_simple "$_fwdir/$_fw.xz" "/lib/firmware/$_fw.xz"
+                fi
+            fi
             _found=yes
         done
         if [[ $_found != yes ]]; then
             if ! [[ -d $(echo /sys/module/${_modname//-/_}|{ read a b; echo $a; }) ]]; then
-                dinfo "Possible missing firmware \"${_fw}\" for kernel module" \
+                dinfo "Possible missing firmware \"${_fw}\" or \"${_fw}.xz\" for kernel module" \
                     "\"${_modname}.ko\""
             else
-                dwarn "Possible missing firmware \"${_fw}\" for kernel module" \
+                dwarn "Possible missing firmware \"${_fw}\" or \"${_fw}\.xz\" for kernel module" \
                     "\"${_modname}.ko\""
             fi
         fi
