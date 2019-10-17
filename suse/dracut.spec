@@ -172,16 +172,22 @@ ln -s %{dracutlibdir}/modules.d/45ifcfg/write-ifcfg-redhat.sh %{buildroot}/%{dra
 
 %post
 # check whether /var/run has been converted to a symlink
-[ -L /var/run ] || sed -i '/GRUB_CMDLINE_LINUX_DEFAULT.*/s/"$/ rd.convertfs"/' /etc/default/grub  || :
-[ -L /var/run ] || cat >>/etc/dracut.conf.d/05-convertfs.conf<<EOF
-add_dracutmodules+=" convertfs "
+if [ ! -L /var/run ]; then
+    PARAM=$(sed -n '/GRUB_CMDLINE_LINUX_DEFAULT=.*/s/.*\(rd.convertfs\).*/\1/p' /etc/default/grub)
+    [ "$PARAM" == "rd.convertfs" ] || sed -i '/GRUB_CMDLINE_LINUX_DEFAULT.*/s/"$/ rd.convertfs"/' /etc/default/grub  || :
+    [ -f /etc/dracut.conf.d/05-convertfs.conf ] && PARAM=$(sed -n '/add_dracutmodules+="convertfs"/s/.*/convert/p' /etc/dracut.conf.d/05-convertfs.conf)
+    [ "$PARAM" == "convert" ] || cat >>/etc/dracut.conf.d/05-convertfs.conf<<EOF
+add_dracutmodules+="convertfs"
 EOF
+fi
 #clean up after the conversion is done
-[ -L /var/run ] &&  sed -i '/GRUB_CMDLINE_LINUX_DEFAULT.*/s/rd.convertfs//' /etc/default/grub || :
-[ -L /var/run ] && sed -i '/add_dracutmodules+=" *convertfs *"/d' /etc/dracut.conf.d/05-convertfs.conf || :
-[ -d /var/lock.lockmove~ ] && rm -rf /var/lock.lockmove~ || :
-[ -d /var/run.runmove~ ] && rm -rf /var/run.runmove~ || :
-[ -s /etc/dracut.conf.d/05-convertfs.conf ] || rm -f /etc/dracut.conf.d/05-convertfs.conf || :
+if [ -L /var/run ] && [ -f /etc/dracut.conf.d/05-convertfs.conf ]; then
+    sed -i '/GRUB_CMDLINE_LINUX_DEFAULT.*/s/rd.convertfs//' /etc/default/grub || :
+    [ -f /etc/dracut.conf.d/05-convertfs.conf ] && sed -i '/add_dracutmodules+="convertfs"/d' /etc/dracut.conf.d/05-convertfs.conf || :
+    [ -s /etc/dracut.conf.d/05-convertfs.conf ] || rm -f /etc/dracut.conf.d/05-convertfs.conf || :
+    [ -d /var/lock.lockmove~ ] && rm -rf /var/lock.lockmove~ || :
+    [ -d /var/run.runmove~ ] && rm -rf /var/run.runmove~ || :
+fi
 %{?regenerate_initrd_post}
 
 %post fips

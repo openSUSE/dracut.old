@@ -22,6 +22,21 @@ done
 #mount /sysroot rw
 [ -w $ROOT ] || mount -o remount,rw $ROOT
 
+#mount /sysroot/var if it is a separate mount
+VARDEV=$(sed -n '/ \/var /s/\([[:graph:]]* \).*/\1/p' /sysroot/etc/fstab)
+VARFS=$(sed -n '/ \/var /s/[[:graph:]]* * [[:graph:]]* *\([[:graph:]]* \).*/\1/p' /sysroot/etc/fstab)
+
+if [ -n $VARDEV ] && [ -n $VARFS ]; then
+    #mount btrfs subvolume var
+    if [ $VARFS == btrfs ]; then
+        SUBVOLIDVAR=$(btrfs subvolume list $ROOT | sed -n '/var$/s/ID \([[:digit:]]*\) .*/\1/p')
+        ROOTDEV=$(sed -n "/\\$ROOT/s/\([[:graph:]]*\) .*/\1/p" /proc/mounts)
+        [ -z $SUBVOLIDVAR ] || mount -o subvolid=$SUBVOLIDVAR $ROOTDEV $ROOT/var
+    else
+        mount $VARDEV $ROOT/var
+    fi
+fi
+
 if [ ! -L $ROOT/var/run -a -e $ROOT/var/run ]; then
     echo "Converting /var/run to symlink"
     mv -f $ROOT/var/run $ROOT/var/run.runmove~
@@ -34,6 +49,7 @@ if [ ! -L $ROOT/var/lock -a -e $ROOT/var/lock ]; then
     ln -sfn ../run/lock $ROOT/var/lock
 fi
 
+[ -n $SUBVOLIDVAR ] && umount $ROOT/var
 [ -w $ROOT ] && mount -o remount,ro $ROOT
 
 echo "Done."
