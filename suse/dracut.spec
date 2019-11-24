@@ -16,7 +16,7 @@
 #
 
 
-%define dracutlibdir %{_libexecdir}/dracut
+%define dracutlibdir %{_prefix}/lib/dracut
 
 Name:           dracut
 Version:        049
@@ -280,10 +280,10 @@ EOF
 %{_mandir}/man8/dracut-shutdown.service.8.*
 %{_mandir}/man5/dracut.conf.5*
 
-%dir %{_libexecdir}/kernel
-%dir %{_libexecdir}/kernel/install.d
-%{_libexecdir}/kernel/install.d/50-dracut.install
-%{_libexecdir}/kernel/install.d/51-dracut-rescue.install
+%dir %{_prefix}/lib/kernel
+%dir %{_prefix}/lib/kernel/install.d
+%{_prefix}/lib/kernel/install.d/50-dracut.install
+%{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %dir %{dracutlibdir}
 %{dracutlibdir}/skipcpio
