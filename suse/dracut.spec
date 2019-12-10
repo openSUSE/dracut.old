@@ -179,11 +179,11 @@ ln -s %{dracutlibdir}/modules.d/45ifcfg/write-ifcfg-redhat.sh %{buildroot}/%{dra
 # check whether /var/run has been converted to a symlink
 [ -L /var/run ] || sed -i '/GRUB_CMDLINE_LINUX_DEFAULT.*/s/"$/ rd.convertfs"/' /etc/default/grub  || :
 [ -L /var/run ] || cat >>/etc/dracut.conf.d/05-convertfs.conf<<EOF
-add_dracutmodules+="convertfs"
+add_dracutmodules+=" convertfs "
 EOF
 #clean up after the conversion is done
 [ -L /var/run ] &&  sed -i '/GRUB_CMDLINE_LINUX_DEFAULT.*/s/rd.convertfs//' /etc/default/grub || :
-[ -L /var/run ] && sed -i '/add_dracutmodules+="convertfs"/d' /etc/dracut.conf.d/05-convertfs.conf || :
+[ -L /var/run ] && sed -i '/add_dracutmodules+=" *convertfs *"/d' /etc/dracut.conf.d/05-convertfs.conf || :
 [ -d /var/lock.lockmove~ ] && rm -rf /var/lock.lockmove~ || :
 [ -d /var/run.runmove~ ] && rm -rf /var/run.runmove~ || :
 [ -s /etc/dracut.conf.d/05-convertfs.conf ] || rm -f /etc/dracut.conf.d/05-convertfs.conf || :
