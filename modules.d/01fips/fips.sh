@@ -1,4 +1,17 @@
-#!/bin/sh
+#!/bin/bash
+
+# find fipscheck, prefer kernel-based version
+fipscheck()
+{
+    FIPSCHECK=/usr/lib64/libkcapi/fipscheck
+    if [ ! -f $FIPSCHECK ]; then
+        FIPSCHECK=/usr/lib/libkcapi/fipscheck
+    fi
+    if [ ! -f $FIPSCHECK ]; then
+        FIPSCHECK=/usr/bin/fipscheck
+    fi
+    echo $FIPSCHECK
+}
 
 mount_boot()
 {
@@ -65,12 +78,26 @@ do_rhevh_check()
         warn "HMAC sum mismatch"
         return 1
     fi
+
     info "rhevh_check OK"
     return 0
 }
 
 fips_load_crypto()
 {
+    local _k
+    local _s
+    local _v
+    local _module
+    local _arch=$(uname -m)
+    local _vmname=vmlinuz
+
+    if [ "$_arch" = "s390x" ]; then
+        _vmname=image
+    fi
+
+    KERNEL=$(uname -r)
+
     FIPSMODULES=$(cat /etc/fipsmodules)
 
     info "Loading and integrity checking all crypto modules"
@@ -86,6 +113,22 @@ fips_load_crypto()
                     _found=1
                     break
                 done </proc/crypto
+                # If we find some hardware specific modules and cannot load them
+                # it is not a problem, proceed.
+                if [ "$_found" = "0" ]; then
+                    if [    "$_module" != "${_module%intel}"    \
+                        -o  "$_module" != "${_module%ssse3}"    \
+                        -o  "$_module" != "${_module%x86_64}"   \
+                        -o  "$_module" != "${_module%z90}"      \
+                        -o  "$_module" != "${_module%s390}"     \
+                        -o  "$_module" == "twofish_x86_64_3way" \
+                        -o  "$_module" == "ablk_helper"         \
+                        -o  "$_module" == "glue_helper"         \
+                    ]; then
+                        _found=1
+                    fi
+                fi
+
                 [ "$_found" = "0" ] && cat /tmp/fips.modprobe_err >&2 && return 1
             fi
         fi
@@ -99,11 +142,6 @@ fips_load_crypto()
 
 do_fips()
 {
-    local _v
-    local _s
-    local _v
-    local _module
-
     KERNEL=$(uname -r)
 
     info "Checking integrity of kernel"
@@ -124,14 +162,14 @@ do_fips()
         BOOT_IMAGE_PATH="${BOOT_IMAGE%${BOOT_IMAGE_NAME}}"
 
         if [ -z "$BOOT_IMAGE_NAME" ]; then
-            BOOT_IMAGE_NAME="vmlinuz-${KERNEL}"
-        elif ! [ -e "/boot/${BOOT_IMAGE_PATH}/${BOOT_IMAGE_NAME}" ]; then
+            BOOT_IMAGE_NAME="${_vmname}-${KERNEL}"
+        elif ! [ -e "/boot/${BOOT_IMAGE_PATH}/${BOOT_IMAGE}" ]; then
             #if /boot is not a separate partition BOOT_IMAGE might start with /boot
             BOOT_IMAGE_PATH=${BOOT_IMAGE_PATH#"/boot"}
             #on some achitectures BOOT_IMAGE does not contain path to kernel
             #so if we can't find anything, let's treat it in the same way as if it was empty
             if ! [ -e "/boot/${BOOT_IMAGE_PATH}/${BOOT_IMAGE_NAME}" ]; then
-                BOOT_IMAGE_NAME="vmlinuz-${KERNEL}"
+                BOOT_IMAGE_NAME="${_vmname}-${KERNEL}"
                 BOOT_IMAGE_PATH=""
             fi
         fi
@@ -142,7 +180,12 @@ do_fips()
             return 1
         fi
 
-        (cd "${BOOT_IMAGE_HMAC%/*}" && sha512hmac -c "${BOOT_IMAGE_HMAC}") || return 1
+        if [ -n "$(fipscheck)" ]; then
+            $(fipscheck) -c "${BOOT_IMAGE_HMAC}" "${BOOT_IMAGE}" || return 1
+        else
+            warn "Could not find fipscheck to verify MACs"
+            return 1
+        fi
     fi
 
     info "All initrd crypto checks done"
