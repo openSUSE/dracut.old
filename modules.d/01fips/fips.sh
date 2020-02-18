@@ -89,12 +89,25 @@ do_fips()
     local _s
     local _v
     local _module
-    local _arch=$(uname -m)
-    local _vmname=vmlinuz
+    local _vmname
 
-    if [ "$_arch" = "s390x" ]; then
+    case "$(uname -m)" in
+    s390|s390x)
         _vmname=image
-    fi
+        ;;
+    ppc*)
+        _vmname=vmlinux
+        ;;
+    aarch64)
+        _vmname=Image
+        ;;
+    armv*)
+        _vmname=zImage
+        ;;
+    *)
+        _vmname=vmlinuz
+        ;;
+    esac
 
     KERNEL=$(uname -r)
 
