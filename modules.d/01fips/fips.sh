@@ -85,6 +85,9 @@ do_fips()
     if [ "$_arch" == "s390x" ]; then
         _vmname=image
     fi
+    if [ "$_arch" == "ppc64le" ]; then
+        _vmname=vmlinux
+    fi
 
     KERNEL=$(uname -r)
     FIPSCHECK=/usr/lib64/libkcapi/fipscheck
