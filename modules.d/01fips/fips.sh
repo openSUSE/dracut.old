@@ -181,8 +181,14 @@ do_fips()
             return 1
         fi
 
+        BOOT_IMAGE_KERNEL="/boot/${BOOT_IMAGE_PATH}${BOOT_IMAGE_NAME}"
+        if ! [ -e "${BOOT_IMAGE_KERNEL}" ]; then
+            warn "${BOOT_IMAGE_KERNEL} does not exist"
+            return 1
+        fi
+
         if [ -n "$(fipscheck)" ]; then
-            $(fipscheck) -c ${BOOT_IMAGE_HMAC} ${BOOT_IMAGE} || return 1
+            $(fipscheck) -c ${BOOT_IMAGE_HMAC} ${BOOT_IMAGE_KERNEL} || return 1
         else
             warn "Could not find fipscheck to verify MACs"
             return 1
