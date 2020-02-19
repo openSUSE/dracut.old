@@ -259,8 +259,8 @@ dracut_instmods() {
 
     $DRACUT_INSTALL \
         ${dracutsysrootdir:+-r "$dracutsysrootdir"} \
-        ${initdir:+-D "$initdir"} ${loginstall:+-L "$loginstall"} ${hostonly:+-H} ${omit_drivers:+-N "$omit_drivers"} ${srcmods:+--kerneldir "$srcmods"} -m "$@"
-    (($? != 0)) && (($_silent == 0)) && derror FAILED: $DRACUT_INSTALL ${dracutsysrootdir:+-r "$dracutsysrootdir"} ${initdir:+-D "$initdir"} ${loginstall:+-L "$loginstall"} ${hostonly:+-H} ${omit_drivers:+-N "$omit_drivers"} ${srcmods:+--kerneldir "$srcmods"} -m "$@" || :
+        ${initdir:+-D "$initdir"} ${loginstall:+-L "$loginstall"} ${hostonly:+-H} ${check_supported:+--check-supported} ${omit_drivers:+-N "$omit_drivers"} ${srcmods:+--kerneldir "$srcmods"} -m "$@"
+    (($? != 0)) && (($_silent == 0)) && derror FAILED: $DRACUT_INSTALL ${dracutsysrootdir:+-r "$dracutsysrootdir"} ${initdir:+-D "$initdir"} ${loginstall:+-L "$loginstall"} ${hostonly:+-H} ${check_supported:+--check-supported} ${omit_drivers:+-N "$omit_drivers"} ${srcmods:+--kerneldir "$srcmods"} -m "$@" || :
 }
 
 inst_library() {
@@ -974,6 +974,7 @@ instmods() {
         ${dracutsysrootdir:+-r "$dracutsysrootdir"} \
         ${loginstall:+-L "$loginstall"} \
         ${hostonly:+-H} \
+        ${check_supported:+--check-supported} \
         ${omit_drivers:+-N "$omit_drivers"} \
         ${srcmods:+--kerneldir "$srcmods"} \
         ${_optional:+-o} \
@@ -988,6 +989,7 @@ instmods() {
                 ${dracutsysrootdir:+-r "$dracutsysrootdir"} \
                 ${loginstall:+-L "$loginstall"} \
                 ${hostonly:+-H} \
+                ${check_supported:+--check-supported} \
                 ${omit_drivers:+-N "$omit_drivers"} \
                 ${srcmods:+--kerneldir "$srcmods"} \
                 ${_optional:+-o} \

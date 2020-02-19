@@ -60,6 +60,7 @@ static bool arg_resolvelazy = false;
 static bool arg_resolvedeps = false;
 static bool arg_hostonly = false;
 static bool no_xattr = false;
+static bool arg_supported = false;
 static char *destrootdir = NULL;
 static char *sysrootdir = NULL;
 static size_t sysrootdirlen = 0;
@@ -979,6 +980,7 @@ static void usage(int status)
                "  --firmwaredirs    Specify the firmware directory search path with : separation\n"
                "  --silent          Don't display error messages for kernel module install\n"
                "  --modalias        Only generate module list from /sys/devices modalias list\n"
+               "  --check-supported Check if module is supported by a vendor\n"
                "  -o --optional     If kernel module does not exist, do not fail\n"
                "  -p --mod-filter-path      Filter kernel modules by path regexp\n"
                "  -P --mod-filter-nopath    Exclude kernel modules by path regexp\n"
@@ -1006,12 +1008,14 @@ static int parse_argv(int argc, char *argv[])
                 ARG_MODALIAS,
                 ARG_KERNELDIR,
                 ARG_FIRMWAREDIRS,
-                ARG_DEBUG
+                ARG_DEBUG,
+                ARG_SUPPORTED
         };
 
         static struct option const options[] = {
                 {"help", no_argument, NULL, 'h'},
                 {"version", no_argument, NULL, ARG_VERSION},
+                {"check-supported", no_argument, NULL, ARG_SUPPORTED},
                 {"dir", no_argument, NULL, 'd'},
                 {"debug", no_argument, NULL, ARG_DEBUG},
                 {"verbose", no_argument, NULL, 'v'},
@@ -1050,6 +1054,9 @@ static int parse_argv(int argc, char *argv[])
                         break;
                 case ARG_SILENT:
                         arg_silent = true;
+                        break;
+                case ARG_SUPPORTED:
+                        arg_supported = true;
                         break;
                 case ARG_MODALIAS:
                         arg_modalias = true;
@@ -1443,6 +1450,34 @@ static bool check_module_path(const char *path)
         return true;
 }
 
+static int check_module_supported(struct kmod_module *mod) {
+        struct kmod_list *l;
+        _cleanup_kmod_module_info_free_list_ struct kmod_list *list = NULL;
+        int ret;
+
+        ret = kmod_module_get_info(mod, &list);
+        if (ret < 0) {
+                log_error("could not get modinfo from '%s': %s\n",
+                          kmod_module_get_name(mod), strerror(-ret));
+                return ret;
+        }
+
+        kmod_list_foreach(l, list) {
+                const char *key = kmod_module_info_get_key(l);
+                const char *value = NULL;
+
+                if (!streq("supported", key))
+                        continue;
+
+                value = kmod_module_info_get_value(l);
+                if (!streq("yes", value) && !streq("external", value)) {
+                        log_warning("Module '%s' is unsupported. This may cause" \
+                                "problems while booting.", kmod_module_get_name(mod));
+             }
+        }
+        return ret;
+}
+
 static int install_dependent_modules(struct kmod_list *modlist)
 {
         struct kmod_list *itr;
@@ -1469,6 +1504,12 @@ static int install_dependent_modules(struct kmod_list *modlist)
 
                 if (arg_mod_filter_noname && (regexec(&mod_filter_noname, name, 0, NULL, 0) == 0)) {
                         continue;
+                }
+
+                if (arg_supported) {
+                        ret = check_module_supported(mod);
+                        if (ret < 0)
+                                return ret;
                 }
 
                 ret = dracut_install(path, &path[kerneldirlen], false, false, true);
@@ -1526,6 +1567,12 @@ static int install_module(struct kmod_module *mod)
         if (!check_module_path(path) || !check_module_symbols(mod)) {
                 log_debug("No symbol or path match for '%s'", path);
                 return 1;
+        }
+
+        if (arg_supported) {
+                ret = check_module_supported(mod);
+                if (ret < 0)
+                        return ret;
         }
 
         log_debug("dracut_install '%s' '%s'", path, &path[kerneldirlen]);
