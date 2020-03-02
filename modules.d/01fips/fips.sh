@@ -137,6 +137,9 @@ do_fips()
                         -o  "$_module" == "twofish_x86_64_3way" \
                         -o  "$_module" == "ablk_helper"         \
                         -o  "$_module" == "glue_helper"         \
+                        -o  "$_module" == "sha1-mb"             \
+                        -o  "$_module" == "sha256-mb"           \
+                        -o  "$_module" == "sha512-mb"           \
                     ]; then
                         _found=1
                     fi
