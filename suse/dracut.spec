@@ -104,6 +104,17 @@ Provides:       %{name}:%{_bindir}/dracut-catimages
 %description tools
 This package contains tools to assemble the local initrd and host configuration.
 
+%package extra
+Summary:        Dracut modules usually not required for normal operation
+Group:          System/Base
+Requires:       %{name} = %{version}-%{release}
+Requires:       evmctl
+Requires:       keyutils
+
+%description extra
+This package contains all modules that are part of dracut upstream
+but are not normally supported or required.
+
 %prep
 %setup -q
 
@@ -118,21 +129,6 @@ make all CFLAGS="%{optflags}" %{?_smp_mflags}
 make DESTDIR=%{buildroot} install %{?_smp_mflags}
 
 echo -e "#!/bin/bash\nDRACUT_VERSION=%{version}-%{release}" > %{buildroot}/%{dracutlibdir}/dracut-version.sh
-
-# use systemd-analyze instead, does not need dracut support
-rm -fr %{buildroot}/%{dracutlibdir}/modules.d/00bootchart
-
-# not supported
-rm -fr %{buildroot}/%{dracutlibdir}/modules.d/00dash
-rm -fr %{buildroot}/%{dracutlibdir}/modules.d/05busybox
-
-# Remove RH-specific s390 modules
-rm -fr %{buildroot}/%{dracutlibdir}/modules.d/95dasd
-rm -fr %{buildroot}/%{dracutlibdir}/modules.d/95zfcp
-rm -fr %{buildroot}/%{dracutlibdir}/modules.d/95znet
-
-# remove gentoo specific modules
-rm -fr %{buildroot}%{dracutlibdir}/modules.d/50gensplash
 
 mkdir -p %{buildroot}/boot/dracut
 mkdir -p %{buildroot}%{_localstatedir}/lib/dracut/overlay
@@ -239,6 +235,24 @@ fi
 %dir %{_localstatedir}/lib/dracut
 %dir %{_localstatedir}/lib/dracut/overlay
 
+%files extra
+%defattr(-,root,root,0755)
+%license COPYING
+
+# Use systemd-analyze instead, does not need dracut support
+%{dracutlibdir}/modules.d/00bootchart
+
+%{dracutlibdir}/modules.d/02caps
+%{dracutlibdir}/modules.d/90stratis
+%{dracutlibdir}/modules.d/00dash
+%{dracutlibdir}/modules.d/05busybox
+%{dracutlibdir}/modules.d/50gensplash
+
+# RH-specific s390 modules, we take another approach
+%{dracutlibdir}/modules.d/95dasd
+%{dracutlibdir}/modules.d/95zfcp
+%{dracutlibdir}/modules.d/95znet
+
 %files
 %defattr(-,root,root,0755)
 %license COPYING
@@ -300,7 +314,6 @@ fi
 %{dracutlibdir}/modules.d/00systemd
 %{dracutlibdir}/modules.d/00warpclock
 %{dracutlibdir}/modules.d/01systemd-initrd
-%{dracutlibdir}/modules.d/02caps
 %{dracutlibdir}/modules.d/02systemd-networkd
 %{dracutlibdir}/modules.d/03modsign
 %{dracutlibdir}/modules.d/03rescue
@@ -332,7 +345,6 @@ fi
 %{dracutlibdir}/modules.d/90multipath
 %{dracutlibdir}/modules.d/90qemu
 %{dracutlibdir}/modules.d/90qemu-net
-%{dracutlibdir}/modules.d/90stratis
 %{dracutlibdir}/modules.d/91crypt-gpg
 %{dracutlibdir}/modules.d/91crypt-loop
 %{dracutlibdir}/modules.d/91zipl
