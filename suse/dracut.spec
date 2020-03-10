@@ -371,22 +371,6 @@ fi
 %{dracutlibdir}/modules.d/99suse
 %{dracutlibdir}/modules.d/99uefi-lib
 
-# executable fixups
-%attr(0755,root,root) %{dracutlibdir}/modules.d/00warpclock/warpclock.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/90livenet/livenet-generator.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/90multipath/multipath-shutdown.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95dcssblk/parse-dcssblk.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95dcssblk/module-setup.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95fcoe/cleanup-fcoe.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95fcoe/stop-fcoe.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/99suse/parse-suse-initrd.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/99suse/module-setup.sh
-
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95lunmask/sas_transport_scan_lun.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95lunmask/parse-lunmask.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95lunmask/fc_transport_scan_lun.sh
-%attr(0755,root,root) %{dracutlibdir}/modules.d/95lunmask/module-setup.sh
-
 %config(noreplace) %{_sysconfdir}/logrotate.d/dracut
 %attr(0640,root,root) %ghost %config(missingok,noreplace) %{_localstatedir}/log/dracut.log
 %dir %{_unitdir}/initrd.target.wants
