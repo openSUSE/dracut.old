@@ -70,7 +70,7 @@ dhcp_wicked_apply() {
     [ -n "${MTU}" ] && ip $1 link set mtu "$MTU" dev "$INTERFACE"
 
     # Setup hostname
-    [ -n "${HOSTNAME}" ] && hostname "$HOSTNAME"
+    [ -n "${HOSTNAME}" ] && echo $HOSTNAME > /proc/sys/kernel/hostname
 
     # If nameserver= has not been specified, use what dhcp provides
     if [ ! -s /tmp/net.$netif.resolv.conf.ipv${1:1:1} ]; then
