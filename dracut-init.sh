@@ -467,7 +467,8 @@ prepare_udev_rules() {
 }
 
 # install function specialized for hooks
-# $1 = type of hook, $2 = hook priority (lower runs first), $3 = hook
+# $1 = type of hook, $2 = hook priority (lower runs first), $3 = hook,
+# $4 = alternative name
 # All hooks should be POSIX/SuS compliant, they will be sourced by init.
 inst_hook() {
     if ! [[ -f $3 ]]; then
@@ -478,7 +479,7 @@ inst_hook() {
         dfatal "No such hook type $1. Aborting initrd creation."
         exit 1
     fi
-    inst_simple "$3" "/lib/dracut/hooks/${1}/${2}-${3##*/}"
+    inst_simple "$3" "/lib/dracut/hooks/${1}/${2}-${4:-${3##*/}}"
 }
 
 # install any of listed files
