@@ -343,6 +343,7 @@ fi
 %{dracutlibdir}/modules.d/90lvm
 %{dracutlibdir}/modules.d/90mdraid
 %{dracutlibdir}/modules.d/90multipath
+%{dracutlibdir}/modules.d/90nvdimm
 %{dracutlibdir}/modules.d/90qemu
 %{dracutlibdir}/modules.d/90qemu-net
 %{dracutlibdir}/modules.d/91crypt-gpg
@@ -381,6 +382,7 @@ fi
 %{dracutlibdir}/modules.d/99shutdown
 %{dracutlibdir}/modules.d/99squash
 %{dracutlibdir}/modules.d/99suse
+%{dracutlibdir}/modules.d/99suse-initrd
 %{dracutlibdir}/modules.d/99uefi-lib
 
 %config(noreplace) %{_sysconfdir}/logrotate.d/dracut
