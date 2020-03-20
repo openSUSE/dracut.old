@@ -81,6 +81,12 @@ dhcp_wicked_apply() {
         if [ -n "${DNSSEARCH}" ]; then
             echo search "${DNSSEARCH}"
         fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
+
+        if  [ -n "${DNSSERVERS}" ] ; then
+            for s in ${DNSSERVERS}; do
+                echo nameserver "$s"
+            done
+        fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
     fi
     # copy resolv.conf if it doesn't exist yet, modify otherwise
     if [ -e /tmp/net.$netif.resolv.conf.ipv${1:1:1} ] && [ ! -e /etc/resolv.conf ]; then
