@@ -1207,7 +1207,8 @@ instmods() {
     # Capture all stderr from modprobe to _fderr. We could use {var}>...
     # redirections, but that would make dracut require bash4 at least.
     eval "( instmods_1 \"\$@\" ) ${_fderr}>&1" \
-        | while read line || [ -n "$line" ]; do [[ "$line" =~ $_filter_not_found ]] || echo $line;done | derror
+        | while read line || [ -n "$line" ]; do
+                [[ "$line" =~ $_filter_not_found ]] || echo ${line#modprobe: FATAL:}; done | dwarn
     _ret=$?
     return $_ret
 }
