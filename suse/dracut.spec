@@ -145,15 +145,19 @@ install -m 0644 suse/s390x_persistent_device.conf %{buildroot}%{_sysconfdir}/dra
 %endif
 
 rm %{buildroot}%{_bindir}/mkinitrd
-# moved to /sbin
+install -D -m 0755 mkinitrd-suse.sh %{buildroot}/%{_sbindir}/mkinitrd
+install -D -m 0755 suse/dracut-installkernel %{buildroot}/%{_sbindir}/installkernel
+
+# moved to /usr/sbin, maintain /sbin compat symlinks
 mkdir -p %{buildroot}/sbin
-install -m 0755 mkinitrd-suse.sh %{buildroot}/sbin/mkinitrd
+ln -s %{_sbindir}/mkinitrd %{buildroot}/sbin/mkinitrd
+ln -s %{_sbindir}/installkernel %{buildroot}/sbin/installkernel
+
 mv %{buildroot}%{_mandir}/man8/mkinitrd-suse.8 %{buildroot}%{_mandir}/man8/mkinitrd.8
 
 mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 install -m 0644 dracut.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/dracut
 
-install -D -m 0755 suse/dracut-installkernel %{buildroot}/sbin/installkernel
 
 %if 0%{?suse_version}
 #rm -f %%{buildroot}/%%{dracutlibdir}/modules.d/45ifcfg/write-ifcfg.sh
@@ -262,6 +266,8 @@ fi
 %doc HACKING TODO AUTHORS NEWS dracut.html dracut.png dracut.svg
 %{_bindir}/dracut
 %{_bindir}/lsinitrd
+%{_sbindir}/installkernel
+%{_sbindir}/mkinitrd
 /sbin/installkernel
 /sbin/mkinitrd
 %{_datarootdir}/bash-completion/completions/lsinitrd
