@@ -149,7 +149,6 @@ rm %{buildroot}%{_bindir}/mkinitrd
 mkdir -p %{buildroot}/sbin
 install -m 0755 mkinitrd-suse.sh %{buildroot}/sbin/mkinitrd
 mv %{buildroot}%{_mandir}/man8/mkinitrd-suse.8 %{buildroot}%{_mandir}/man8/mkinitrd.8
-install -m 0755 suse/mkinitrd_setup_dummy %{buildroot}/sbin/mkinitrd_setup
 
 mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 install -m 0644 dracut.logrotate %{buildroot}%{_sysconfdir}/logrotate.d/dracut
@@ -265,7 +264,6 @@ fi
 %{_bindir}/lsinitrd
 /sbin/installkernel
 /sbin/mkinitrd
-/sbin/mkinitrd_setup
 %{_datarootdir}/bash-completion/completions/lsinitrd
 %{_datadir}/pkgconfig/dracut.pc
 
