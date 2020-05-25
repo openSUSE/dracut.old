@@ -626,6 +626,7 @@ for p in $(getargs ip=); do
                 [ -z "$DO_VLAN" ] && \
                     [ -e /sys/class/net/$netif/address ] && \
                     > /tmp/net.$(cat /sys/class/net/$netif/address).did-setup
+                    source_hook initqueue/online $netif
             ;;
             *)
                 if [ $ret -eq 0 ]; then
