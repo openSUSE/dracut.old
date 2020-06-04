@@ -46,6 +46,12 @@ install() {
     inst_hook cmdline 99 "$moddir/parse-ifname.sh"
     inst_hook cleanup 10 "$moddir/kill-dhclient.sh"
 
+    # SUSE specific files
+    inst_multiple /etc/sysconfig/network/ifcfg-*
+    inst_multiple -o /etc/sysconfig/network/ifroute-*
+    inst_simple /etc/sysconfig/network/routes
+    inst_multiple -o /var/lib/wicked/duid.xml /var/lib/wicked/iaid.xml
+
     # install all config files for teaming
     unset TEAM_MASTER
     unset TEAM_CONFIG
