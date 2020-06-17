@@ -651,7 +651,7 @@ if [ -z "$NO_AUTO_DHCP" ] && [ ! -e /tmp/net.${netif}.up ]; then
             do_dhcp -4
         fi
     fi
-    if [ $? -eq 0 ] && [ -f /tmp/leaseinfo.${netif}* ]; then
+    if [ $? -eq 0 ] && [ -z "$(ls /tmp/leaseinfo.${netif}*)" ]; then
          > /tmp/net.${netif}.did-setup
          if [ -e /sys/class/net/${netif}/address ]; then
              > /tmp/net.$(cat /sys/class/net/${netif}/address).did-setup
