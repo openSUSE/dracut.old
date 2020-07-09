@@ -575,7 +575,7 @@ for p in $(getargs ip=); do
         esac
     done
 
-    if [ $? -eq 0 ]; then
+    if [ $? -eq 0 ] && [ -n "$(ls /tmp/leaseinfo.${netif}*)" ]; then
         > /tmp/net.$netif.did-setup
        [ -z "$DO_VLAN" ] && \
        [ -e /sys/class/net/$netif/address ] && \
@@ -609,7 +609,7 @@ if [ ! -e /tmp/net.${netif}.up ]; then
             do_dhcp -4
         fi
     fi
-    if [ $? -eq 0 ] && [ -f /tmp/leaseinfo.${netif}* ]; then
+    if [ $? -eq 0 ] && [ -n "$(ls /tmp/leaseinfo.${netif}*)" ]; the
         bring_online
     fi
 fi
