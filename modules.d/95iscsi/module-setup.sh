@@ -118,21 +118,7 @@ install_iscsiroot() {
     done
 
     [ -z "$iscsi_address" ] && return
-    local_address=$(ip -o route get to $iscsi_address | sed -n 's/.*src \([0-9a-f.:]*\).*/\1/p')
-    ifname=$(ip -o route get to $iscsi_address | sed -n 's/.*dev \([^ ]*\).*/\1/p')
-
-    #follow ifcfg settings for boot protocol
-    bootproto=$(sed -n "/BOOTPROTO/s/BOOTPROTO='\([[:alpha:]]*6\?\)4\?'/\1/p" /etc/sysconfig/network/ifcfg-$ifname)
-    if [ $bootproto ]; then
-        printf 'ip=%s:%s ' ${ifname} ${bootproto}
-    else
-        printf 'ip=%s:static ' ${ifname}
-    fi
-
-    if [ -e /sys/class/net/$ifname/address ] ; then
-        ifmac=$(cat /sys/class/net/$ifname/address)
-        printf 'ifname=%s:%s ' ${ifname} ${ifmac}
-    fi
+    ip_params_for_remote_addr "$iscsi_address"
 
     if [ -n "$iscsi_address" -a -n "$iscsi_targetname" ] ; then
         if [ -n "$iscsi_port" -a "$iscsi_port" -eq 3260 ] ; then
