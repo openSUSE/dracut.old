@@ -609,7 +609,7 @@ if [ ! -e /tmp/net.${netif}.up ]; then
             do_dhcp -4
         fi
     fi
-    if [ $? -eq 0 ] && [ -n "$(ls /tmp/leaseinfo.${netif}*)" ]; the
+    if [ $? -eq 0 ] && [ -n "$(ls /tmp/leaseinfo.${netif}*)" ]; then
         bring_online
     fi
 fi
